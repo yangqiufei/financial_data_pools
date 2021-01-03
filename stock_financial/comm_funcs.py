@@ -17,6 +17,7 @@ import sys
 import os
 import threading
 from abc import ABCMeta, abstractmethod
+import aiohttp
 
 
 def ua_random():
@@ -47,6 +48,15 @@ def ua_random():
         "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24"]
 
     return random.choice(user_agent_list)
+
+
+async def async_crawl(url):
+    header = {
+        'user-agent': ua_random()
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url,headers=header) as respose:
+            return await respose.text()
 
 
 def requests_get(url):
@@ -208,9 +218,9 @@ class MultiThread(threading.Thread):
         '''
         重写run方法
         '''
-        print('启动线程 {}'.format(self.name))
+        print('启动爬取线程 {}'.format(self.name))
         self.scheduler()
-        print('结束线程 {}'.format(self.name))
+        print('结束爬取线程 {}'.format(self.name))
 
     # 任务调度
     def scheduler(self):

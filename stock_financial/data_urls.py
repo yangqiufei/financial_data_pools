@@ -2,6 +2,7 @@
 数据来源地址
 '''
 
+import time
 from functools import partial
 from comm_funcs import *
 
@@ -30,7 +31,7 @@ def get_suspended_url(**kwargs):
     param_mkt = kwargs.get('mkt', '1')
     param_fd = kwargs.get('fd')
     param_page = kwargs.get('page', '1')
-    param_psize = kwargs.get('psize', '30')
+    param_psize = kwargs.get('psize', '100')
     parma_type = kwargs.get('type', 'FD')
     parma_js = kwargs.get('js', '{"pages":"(pc)","data":[(x)]}')
     time_stamp = kwargs.get('time_stamp', int(round(time.time(), 3) * 1000))
@@ -68,7 +69,7 @@ def get_unlocked_url(**kwargs):
     # 排序 1解禁时间由近到远，-1解禁时间由远到近
     param_sr = kwargs.get('sr', '1')
     param_page = kwargs.get('page', '1')
-    param_psize = kwargs.get('psize', '30')
+    param_psize = kwargs.get('psize', '100')
     parma_type = 'XSJJ_NJ_PC'
     parma_js = '{"pages":"(tp)","data":(x),"font":(font)}'
 
@@ -117,7 +118,7 @@ def get_financial_url(**kwargs):
     param_st = kwargs.get('st', 'REPORT_DATE')
     # 排序
     param_sr = kwargs.get('sr', '-1')
-    param_psize = kwargs.get('psize', '50')
+    param_psize = kwargs.get('psize', '100')
     param_page = kwargs.get('page', '1')
     parma_type = kwargs.get('type', 'RPT_DMSK_FN_INCOME')
     param_sty = 'ALL'
@@ -156,7 +157,7 @@ def get_statements_url(**kwargs):
     param_st = 'UPDATE_DATE,SECURITY_CODE'
     # 排序
     param_sr = '-1,-1'
-    param_psize = kwargs.get('psize', '50')
+    param_psize = kwargs.get('psize', '100')
     param_page = kwargs.get('page', '1')
     parma_type = 'RPT_LICO_FN_CPD'
     param_sty = 'ALL'
@@ -208,3 +209,25 @@ def get_cashflow_url(**kwargs):
         sr='-1,-1',
         type='RPT_DMSK_FN_CASHFLOW')
     return cash_flow_url(**kwargs)
+
+
+def get_trade_date_detail_url(**kwargs):
+    domain = 'http://88.push2.eastmoney.com/api/qt/clist/get'
+    ut = 'bd1d9ddb04089700cf9c27f6f7426281'
+    fs = 'm:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:1+t:23'
+    fields = 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f11'
+    timestamp = int(round(time.time(), 3) * 1000)
+    param_page = kwargs.get('page', '1')
+    param_psize = kwargs.get('psize', '100')
+    url = '{}?cb=&pn={}&pz={}&po=1&np=1&ut={}&fltt=2&invt=2&fid=f3&fs={}&fields={}&_={}'.format(
+        domain,
+        param_page,
+        param_psize,
+        ut,
+        fs,
+        fields,
+        timestamp
+    )
+
+    return url
+
