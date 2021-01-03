@@ -1,0 +1,23 @@
+CREATE TABLE `s_trade_detail` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `trade_date` int(10) unsigned NOT NULL COMMENT '日期',
+  `item_code` char(6) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '000000' COMMENT '代码：f12',
+  `item_name` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '名称：f14',
+  `open` double unsigned DEFAULT '0' COMMENT '开盘价：f17',
+  `high` double unsigned DEFAULT '0' COMMENT '最高价：f15',
+  `low` double unsigned DEFAULT '0' COMMENT '最低价: f16',
+  `close` double unsigned DEFAULT '0' COMMENT '收盘价：f2',
+  `pre_close` double unsigned DEFAULT '0' COMMENT '昨天收盘价：f18',
+  `change` double DEFAULT '0' COMMENT '涨跌额：f4',
+  `pct_chg` double DEFAULT '0' COMMENT '涨跌幅：f3',
+  `amplitude` double DEFAULT '0' COMMENT '振幅：f7',
+  `vol` double unsigned DEFAULT '0' COMMENT '成交量：f5',
+  `vol_percent` double DEFAULT '0' COMMENT '量比',
+  `amount` double unsigned DEFAULT '0' COMMENT '成交金额：f6',
+  `turnover_rate` double unsigned DEFAULT '0' COMMENT '换手率：f8',
+  `pe` double DEFAULT '0' COMMENT '市盈率；f9',
+  `circulate` double unsigned DEFAULT '0' COMMENT '流通市值：f20',
+  `market_capital` double unsigned DEFAULT '0' COMMENT '总市值：f21',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `trade_date` (`trade_date`,`item_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

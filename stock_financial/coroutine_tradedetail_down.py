@@ -51,6 +51,9 @@ async def parse(url, engine):
 
     insert_values = []
     for row in data_all:
+        if row['f6'] == '-':
+            continue
+            
         data_tmp = []
         for f in map_dict:
             if row[f] == '-':

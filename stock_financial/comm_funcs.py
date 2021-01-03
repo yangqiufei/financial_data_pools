@@ -98,7 +98,7 @@ def get_mysql_client():
         'user': get_config('mysql', 'user'),
         'password': get_config('mysql', 'password'),
         'database': get_config('mysql', 'database'),
-        'port': int(get_config('mysql', 'port')),
+        'port': get_config('mysql', 'port'),
         'charset': get_config('mysql', 'charset'),
     }
     return pymysql.connect(**db_config)
@@ -181,7 +181,7 @@ def get_db_engine_for_pandas():
     user = get_config('mysql', 'user')
     password = get_config('mysql', 'password')
     database = get_config('mysql', 'database')
-    port = int(get_config('mysql', 'port'))
+    port = get_config('mysql', 'port')
 
     cnf = "mysql+pymysql://{}:{}@{}:{}/{}".format(
         user, password, host, port, database)
@@ -247,7 +247,8 @@ def get_config(read_default_group, key, arg=None):
             work_path = os.path.dirname(os.path.realpath(__file__))
             read_default_file = os.path.join(work_path, 'conf.ini')
         else:
-            read_default_file = "conf.cnf"
+            work_path = os.path.dirname(os.path.realpath(__file__))
+            read_default_file = os.path.join(work_path, 'conf.cnf')
 
         cfg.read(os.path.expanduser(read_default_file))
         return cfg.get(read_default_group, key)
