@@ -3,8 +3,11 @@
 '''
 
 import time
+import random
+import datetime
 from functools import partial
-from comm_funcs import *
+from comm_funcs import get_current_date
+from comm_funcs import time_last_day_of_month
 
 
 def get_suspended_url(**kwargs):

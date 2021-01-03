@@ -1,22 +1,21 @@
 """
 获取资产负债表信息
 
-使用示例（获取2018年4季度资产负债率数据）：
-bal_run = BalancesheetsRun(
-    data_queue='balancesheet_data_queue',
-    page_queue='balancesheet_page_queue')
-report_date = time_last_day_of_month(year=2018, month=12)
-
-bal_run.run(report_date=report_date)
+使用示例（获取2020年1季度资产负债率数据）：
+    year = 2020
+    month = 3
+    main(year, month)
 """
 
 import time
 import json
 import pandas as pd
-from data_urls import *
-from comm_funcs import *
+from data_urls import get_balance_sheets_url
+from comm_funcs import async_crawl
+from comm_funcs import get_db_engine_for_pandas
+from comm_funcs import time_last_day_of_month
+from comm_funcs import get_page_num
 import asyncio
-import aiohttp
 
 
 async def parse(url, engine):
@@ -39,6 +38,7 @@ async def parse(url, engine):
         name='s_balance_sheets',
         con=engine,
         if_exists='append')
+
 
 def column():
     return [
@@ -67,25 +67,34 @@ def column():
         'industry_name'
     ]
 
+
 def main(year, month):
     engine = get_db_engine_for_pandas()
     report_date = time_last_day_of_month(year=year, month=month)
-    total_page = int(get_page_num(get_balance_sheets_url(report_date=report_date))['result']['pages'])
+    total_page = int(
+        get_page_num(
+            get_balance_sheets_url(
+                report_date=report_date))['result']['pages'])
     loop = asyncio.get_event_loop()
     tasks = [
-        loop.create_task(parse(
-            get_balance_sheets_url(report_date=report_date, page=p), engine)) for p in range(1, total_page+1) ]
+        loop.create_task(
+            parse(
+                get_balance_sheets_url(
+                    report_date=report_date,
+                    page=p),
+                engine)) for p in range(
+            1,
+            total_page +
+            1)]
     loop.run_until_complete(asyncio.wait(tasks))
 
-class Coroutine(object):
-    pass
 
 # https://github.com/huangsir250/financial_data_pools
 if __name__ == '__main__':
     betime = time.time()
-    # 获取A股2020年三季报的资产负债信息
-    year = 2010
+    # 获取A股2020年1季报的资产负债信息
+    year = 2020
     month = 3
     main(year, month)
-    total_time = time.time()-betime
+    total_time = time.time() - betime
     print('总计耗时：{}'.format(total_time))

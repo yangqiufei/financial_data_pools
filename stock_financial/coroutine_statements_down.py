@@ -8,8 +8,11 @@
 """
 
 
-from data_urls import *
-from comm_funcs import *
+from data_urls import get_statements_url
+from comm_funcs import async_crawl
+from comm_funcs import get_db_engine_for_pandas
+from comm_funcs import time_last_day_of_month
+from comm_funcs import get_page_num
 import json
 import time
 import pandas as pd

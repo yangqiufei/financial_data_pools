@@ -7,8 +7,11 @@ month = 3
 main(year, month)
 """
 
-from data_urls import *
-from comm_funcs import *
+from data_urls import get_cashflow_url
+from comm_funcs import async_crawl
+from comm_funcs import get_db_engine_for_pandas
+from comm_funcs import time_last_day_of_month
+from comm_funcs import get_page_num
 import json
 import time
 import pandas as pd
@@ -36,6 +39,7 @@ async def parse(url, engine):
         con=engine,
         if_exists='append')
 
+
 def column():
     return [
         'security_code',
@@ -60,14 +64,25 @@ def column():
         'cla_ratio'
     ]
 
+
 def main(year, month):
     engine = get_db_engine_for_pandas()
     report_date = time_last_day_of_month(year=year, month=month)
-    total_page = int(get_page_num(get_cashflow_url(report_date=report_date))['result']['pages'])
+    total_page = int(
+        get_page_num(
+            get_cashflow_url(
+                report_date=report_date))['result']['pages'])
     loop = asyncio.get_event_loop()
     tasks = [
-        loop.create_task(parse(
-            get_cashflow_url(report_date=report_date, page=p), engine)) for p in range(1, total_page+1) ]
+        loop.create_task(
+            parse(
+                get_cashflow_url(
+                    report_date=report_date,
+                    page=p),
+                engine)) for p in range(
+            1,
+            total_page +
+            1)]
     loop.run_until_complete(asyncio.wait(tasks))
 
 

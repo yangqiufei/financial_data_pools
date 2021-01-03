@@ -6,8 +6,10 @@
     main(fd)
 """
 
-from data_urls import *
-from comm_funcs import *
+from data_urls import get_suspended_url
+from comm_funcs import async_crawl
+from comm_funcs import get_db_engine_for_pandas
+from comm_funcs import get_page_num
 import json
 import time
 import pandas as pd

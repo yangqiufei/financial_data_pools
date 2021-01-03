@@ -1,18 +1,17 @@
 """
 协程获取财务利润表信息
 
-使用示例（获取2020年第三季度利润）：
-report_date = time_last_day_of_month(year=2020, month=9)
-
-fina_run = FinacialRun(
-    data_queue='fina_data_queue',
-    page_queue='fina_page_queue'
-)
-fina_run.run(report_date = report_date)
+使用示例（获取2020年第2季度利润）：
+    year = 2020
+    month = 6
+    main(year, month)
 """
 
-from data_urls import *
-from comm_funcs import *
+from data_urls import get_financial_url
+from comm_funcs import async_crawl
+from comm_funcs import get_db_engine_for_pandas
+from comm_funcs import time_last_day_of_month
+from comm_funcs import get_page_num
 import json
 import time
 import pandas as pd
@@ -64,9 +63,9 @@ def column():
         'dpn_ratio'
     ]
 
-def main():
+def main(year, month):
     engine = get_db_engine_for_pandas()
-    report_date = time_last_day_of_month(year=2010, month=6)
+    report_date = time_last_day_of_month(year=year, month=month)
     total_page = int(get_page_num(get_financial_url(report_date=report_date))['result']['pages'])
     loop = asyncio.get_event_loop()
     tasks = [
@@ -78,6 +77,8 @@ class Coroutine(object):
     pass
 if __name__ == '__main__':
     begin = time.time()
-    main()
+    year = 2020
+    month = 6
+    main(year, month)
     end = time.time()
     print(end - begin)
