@@ -98,7 +98,7 @@ def get_mysql_client():
         'user': get_config('mysql', 'user'),
         'password': get_config('mysql', 'password'),
         'database': get_config('mysql', 'database'),
-        'port': get_config('mysql', 'port'),
+        'port': int(get_config('mysql', 'port')),
         'charset': get_config('mysql', 'charset'),
     }
     return pymysql.connect(**db_config)
@@ -257,7 +257,7 @@ def get_config(read_default_group, key, arg=None):
 
 
 class HeyRun(metaclass=ABCMeta):
-    """主程序运行类"""
+    """多线程中主程序运行类"""
 
     def __init__(
             self,

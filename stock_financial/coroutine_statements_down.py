@@ -73,8 +73,10 @@ def main(year, month):
 
 
 if __name__ == '__main__':
+    # 代码地址：
+    # https://github.com/huangsir250/financial_data_pools
     begin = time.time()
-    # 获取2020年二季度数据
+    # 获取2020年三季度财务报表信息数据
     year = 2020
     month = 9
     main(year=year, month=month)

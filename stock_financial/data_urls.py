@@ -215,6 +215,11 @@ def get_cashflow_url(**kwargs):
 
 
 def get_trade_date_detail_url(**kwargs):
+    '''
+    获取每日交易信息
+    :param kwargs: 
+    :return: 
+    '''
     domain = 'http://88.push2.eastmoney.com/api/qt/clist/get'
     ut = 'bd1d9ddb04089700cf9c27f6f7426281'
     fs = 'm:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:1+t:23'
@@ -234,3 +239,82 @@ def get_trade_date_detail_url(**kwargs):
 
     return url
 
+
+def get_lhb_list_url(**kwargs):
+    '''
+    获取龙虎版列表信息
+    :param kwargs: 
+    :return: 
+    '''
+    domain = 'http://data.eastmoney.com/DataCenter_V3/stock2016/TradeDetail/'
+    today_date = get_current_date()
+    timestamp = int(time.time() / 6)
+    param_page = kwargs.get('page', '1')
+    param_psize = kwargs.get('psize', '200')
+    param_begin_date = kwargs.get('begin_date', today_date)
+    param_end_date = kwargs.get('end_date', today_date)
+    url = '{}pagesize={},page={},sortRule=-1,sortType=,startDate={},endDate={},gpfw=0,js=.html?rt={}'.format(
+        domain,
+        param_psize,
+        param_page,
+        param_begin_date,
+        param_end_date,
+        timestamp
+    )
+
+    return url
+
+
+def get_lhb_detail_url(**kwargs):
+    '''
+    获取个股龙虎榜详情信息
+    :param kwargs: 
+    :return: 
+    '''
+    url = 'http://data.eastmoney.com/stock/lhb,{},{}.html'
+    today_date = get_current_date()
+    param_code = kwargs.get('item_code')
+    param_date = kwargs.get('trade_date', today_date)
+
+    return url.format(param_date, param_code)
+
+def get_bar():
+    '''
+    获取上证指数等
+    :return: 
+    '''
+    url = 'http://push2.eastmoney.com/api/qt/ulist.np/get?ut=6d2ffaa6a585d612eda28417681d58fb&fields=f1,f2,f3,f4,f14&secids=1.000001,0.399001,0.399006,1.000300&cb=&_=1609909795250'
+    return url
+
+def get_longtou_url(**kwargs):
+    '''
+    获取行业龙头
+    :param kwargs: 
+    :return: 
+    '''
+    domain = 'http://quote.eastmoney.com/zhuti/api/themerelatestocks'
+    param_start = kwargs.get('start', '0')
+    param_psize = kwargs.get('psize', '200')
+    url = '{}?CategoryCode=112&startIndex={}&pageSize={}'
+    return url.format(domain, param_start, param_psize)
+
+def get_history_trade_list(**kwargs):
+    '''
+    网易历史数据地址
+    :return: 
+    '''
+    item_code = kwargs.get('item_code')
+    end_trade_date = kwargs.get('end_trade_date', None)
+
+    if end_trade_date is None:
+        end_trade_date = get_current_date().replace('-', '')
+
+    if item_code[0] == '6':
+        item_code = ''.join(['0', item_code])
+    else:
+        item_code = ''.join(['1', item_code])
+
+    domain = 'http://quotes.money.163.com/service/chddata.html'
+    fields = 'TCLOSE;HIGH;LOW;TOPEN;LCLOSE;CHG;PCHG;TURNOVER;VOTURNOVER;VATURNOVER;TCAP;MCAP'
+    url = '{}?code={}&end={}&fields={}'.format(domain, item_code, end_trade_date, fields)
+    return url
