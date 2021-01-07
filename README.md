@@ -63,6 +63,8 @@ password =
 - coroutine_suspended_down.py，停复牌信息下载程序，附有使用示例
 - coroutine_unlocked_down.py，解禁个股信息下载程序，附有使用示例
 - coroutine_tradedetail_down.py，个股每日交易信息下载程序，附有使用示例
+- history_trade_down.py，历史交易数据下载
+- coroutine_lhblist_down.py，龙虎榜数据下载
 
 #### 问题反馈
 任何问题欢迎在[Issues]中反馈，或者添加微信：hi-huangsir ； QQ：1762934298
