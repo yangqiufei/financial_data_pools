@@ -286,7 +286,7 @@ def get_bar():
     url = 'http://push2.eastmoney.com/api/qt/ulist.np/get?ut=6d2ffaa6a585d612eda28417681d58fb&fields=f1,f2,f3,f4,f14&secids=1.000001,0.399001,0.399006,1.000300&cb=&_=1609909795250'
     return url
 
-def get_longtou_url(**kwargs):
+def get_leader_url(**kwargs):
     '''
     获取行业龙头
     :param kwargs: 
@@ -318,3 +318,34 @@ def get_history_trade_list(**kwargs):
     fields = 'TCLOSE;HIGH;LOW;TOPEN;LCLOSE;CHG;PCHG;TURNOVER;VOTURNOVER;VATURNOVER;TCAP;MCAP'
     url = '{}?code={}&end={}&fields={}'.format(domain, item_code, end_trade_date, fields)
     return url
+
+def get_notice_url(**kwargs):
+    '''
+    获取公告
+    :param kwargs: 
+    :return: 
+    '''
+    domain = 'http://data.eastmoney.com/notices/getdata.ashx?'
+
+    param_page = kwargs.get('page', '1')
+    param_psize = kwargs.get('psize', '100')
+    param_time = kwargs.get('date', '')
+
+    # 公告类型，0：所有公告，1：财务报告，2：融资公告，3：风险提示，4：信息变更，5：重大事项，6：资产重组，7,：持股变动
+    param_type = kwargs.get('notice_type', '0')
+    rt = 53669667
+
+    url = '{}StockCode=&FirstNodeType={}&CodeType=A&PageIndex={}&PageSize={}&jsObj=&SecNodeType=0&Time={}&rt={}'
+    return url.format(domain, param_type, param_page, param_psize, param_time, rt)
+
+def get_financing_notice_url(**kwargs):
+    '''
+    获取定增公告
+    :param kwargs: 
+    :return: 
+    '''
+    url = partial(
+        get_notice_url,
+        notice_type='2')
+    return url(**kwargs)
+
