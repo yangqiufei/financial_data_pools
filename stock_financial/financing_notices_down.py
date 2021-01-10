@@ -1,6 +1,12 @@
 """
-获取历史交易
-run()
+# 获取指定某天的公告
+# date = '2021-01-10'
+# date = get_current_date()
+# data = tuple(range(1, 1001))
+# main(data, notice_type=2, notice_date=date)
+
+# 获取所有定增的公告
+run(total_page=100, notice_type=2)
 """
 
 import multiprocessing
@@ -93,7 +99,6 @@ class DownNotices(threading.Thread):
             'title',
         ]
 
-
 def run(total_page=100, notice_type=0, notice_date=''):
     '''
     多进程运行程序入口
@@ -122,7 +127,6 @@ def run(total_page=100, notice_type=0, notice_date=''):
         p.apply_async(main, args=(data[begin:end], notice_type, notice_date))
     p.close()
     p.join()
-
 
 def main(data, notice_type=0, notice_date=''):
     '''
@@ -164,11 +168,10 @@ if __name__ == '__main__':
     start = time.time()
 
     # 获取指定某天的公告
-
-    # date = '2021-01-07'
-    # date = get_current_date()
-    # data = tuple(range(1, 101))
-    # main(data, notice_type=2, notice_date=date)
+    date = '2021-01-10'
+    date = get_current_date()
+    data = tuple(range(1, 101))
+    main(data, notice_type=2, notice_date=date)
 
     # 获取所有定增的公告
     run(total_page=100, notice_type=2)

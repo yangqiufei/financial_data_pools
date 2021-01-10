@@ -349,3 +349,35 @@ def get_financing_notice_url(**kwargs):
         notice_type='2')
     return url(**kwargs)
 
+def get_concept_url(**kwargs):
+    '''
+    获取概念题材
+    :param kwargs: 
+    :return: 
+    '''
+    param_page = kwargs.get('page', '1')
+    param_psize = kwargs.get('psize', '100')
+
+    domain = 'http://data.eastmoney.com/dataapi/gstc/search'
+    url = '{}?st=ChangePercent&sr=-1&ps={}&p={}'.format(domain, param_psize, param_page)
+
+    return url
+
+def get_hsgt_url(**kwargs):
+    '''
+    获取沪深港通的信息
+    :param kwargs: 
+    :return: 
+    '''
+    param_page = kwargs.get('page', '1')
+    param_psize = kwargs.get('psize', '100')
+
+    token = '894050c76af8597a853f5b408b759f5d'
+    domain = 'http://dcfm.eastmoney.com/EM_MutiSvcExpandInterface/api/js/get?type=HSGT20_SC_LS_MX'
+    url = '{}&token={}&st=HdDate&sr=-1&p={}&ps={}&js={"pages":(tp),"data":(x)}&filter=(Market=%27005%27)&rt=53676010'
+    return url.format(domain, token, param_page, param_psize)
+
+def get_sz_url():
+    domain = 'http://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.000001'
+    url = '{}&fields1=f1&fields2=f51,f53&klt=101&fqt=0&lmt=600&end=29991010&ut=b2884a393a59ad64002292a3e90d46a5&cb=&_=1610281943586'
+    return url.format(domain)
