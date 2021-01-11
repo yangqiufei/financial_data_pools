@@ -365,7 +365,7 @@ def get_concept_url(**kwargs):
 
 def get_hsgt_url(**kwargs):
     '''
-    获取沪深港通的信息
+    获取沪深港通总体流入流出的信息
     :param kwargs: 
     :return: 
     '''
@@ -377,7 +377,23 @@ def get_hsgt_url(**kwargs):
     url = '{}&token={}&st=HdDate&sr=-1&p={}&ps={}&js={"pages":(tp),"data":(x)}&filter=(Market=%27005%27)&rt=53676010'
     return url.format(domain, token, param_page, param_psize)
 
-def get_sz_url():
+def get_sz_url(**kwargs):
     domain = 'http://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.000001'
     url = '{}&fields1=f1&fields2=f51,f53&klt=101&fqt=0&lmt=600&end=29991010&ut=b2884a393a59ad64002292a3e90d46a5&cb=&_=1610281943586'
     return url.format(domain)
+
+def get_hsgt_detail_url(**kwargs):
+    '''
+    获取沪深港通个股持仓及加减仓的信息
+    :return: 
+    '''
+    domain = 'http://dcfm.eastmoney.com/EM_MutiSvcExpandInterface/api/js/get'
+    url_type = 'HSGT20_GGTJ_SUM'
+    token = '894050c76af8597a853f5b408b759f5d'
+    st = 'ShareSZ_Chg_One'
+    param_page = kwargs.get('page', '1')
+    param_psize = kwargs.get('psize', '100')
+    param_date = kwargs.get('date', get_current_date())
+    js = '{%22pages%22:(tp),%22data%22:(x)}'
+    url = '{}?type={}&token={}&st={}&sr=-1&p={}&ps={}&js={}&filter=(DateType=%271%27%20and%20HdDate=%27{}%27)&rt=53677975'
+    return url.format(domain, url_type, token, st, param_page, param_psize, js, param_date)
