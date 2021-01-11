@@ -76,6 +76,7 @@ password =
 - coroutine_lhblist_down.py，龙虎榜数据下载
 - financing_notices_down.py，公告下载
 - concepts_down.py 个股概念板块下载
+- coroutine_hsgt_down.py 沪港深通下载
 
 #### 问题反馈
 任何问题欢迎在[Issues]中反馈，或者添加微信：hi-huangsir ； QQ：1762934298
