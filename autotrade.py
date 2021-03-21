@@ -217,5 +217,6 @@ class AutoTrade:
 
 
 if __name__ == '__main__':
+	# 示例 买入000001，100股
 	ths_trade = AutoTrade()
 	data = ths_trade.buy_stock(amount=100, code='000001')
