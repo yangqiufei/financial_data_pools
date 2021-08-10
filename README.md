@@ -18,7 +18,7 @@
 
 #### 代码需要的运行环境：
 - Python3，本机的Python版本为3.7.9，[下载地址](https://www.python.org/downloads/)
-- redis，代码使用了redis作为队列临时存储数据，下载地址
+- redis，代码使用了redis作为队列临时存储数据
 - MySQL，作为数据存储，[下载地址](https://www.mysql.com/downloads/)
 - Python的第三方包，包括pandas，pymysql等，详情参照requirements.txt文件及**安装依赖**项
 
@@ -38,7 +38,8 @@ redis==3.5.3
 requests==2.20.0
 seaborn==0.11.0
 selenium==3.141.0
-SQLAlchemy==1.3.20
+SQLAlchemy==1.4.22
+lxml==4.6.3
 ```
 
 
