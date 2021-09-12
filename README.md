@@ -1,5 +1,8 @@
+### 重新编写了获取历史交易数据
+需要下载的包：`akshare`；通过 `pip install akshare` 安装。
+
 ### 新增同花顺操作文件，通过操作同花顺进行自动化交易
-需要下载的包：pyperclip、pywinauto、pandas；通过pip install 安装即可。
+需要下载的包：`pyperclip`、`pywinauto`、`pandas`；通过`pip install` 安装即可。
 
 ### 多进程、多线程、协程秒级爬取A股市场交易数据
 
@@ -11,7 +14,7 @@
 - 停复牌信息，秒级爬取两年数据
 - 解禁个股信息，秒级爬取两年数据
 - 板块概念，秒级爬取所有数据
-- 20年的历史交易数据，10分钟爬取1.3G、4000多个文件数据
+- 历史交易数据程序重新编写，速度再次提升50%左右，6分钟左右完成
 - 个股公告，秒级爬取两年公告数据
 - 沪深港通，秒级爬取盘后所有数据
 - 以上数据支持全量下载，比如根据时间下载任何季度的业绩报表
@@ -40,35 +43,42 @@ seaborn==0.11.0
 selenium==3.141.0
 SQLAlchemy==1.4.22
 lxml==4.6.3
+akshare==1.0.90
 ```
 
 
-##### 数据库配置
-- window环境配置文件名为conf.ini
-- linux环境配置文件名为conf.cnf
-- 包括MySQL和redis配置
-###### 列出的配置中只需要将对应的配置值改成自己的，注意：redis如果没有密码，password项不需要填写
+##### 配置文件
+- window环境配置文件名为config.yaml
+
+- 包括数据本地保存路径和名字、MySQL和redis等配置
+###### 列出的配置中只需要将对应的配置值改成自己的
 
 ```
-[mysql]
-host = 127.0.0.1
-port = 3306
-user = root
-password = root
-database = stock
-charset = utf8mb4
+...
+# 本地保存路径
+save_path:
+    stock:              # A股
+        detail:         # 每日交易数据
+            path: F:\csv\detail
+            file_name: <<date>>.csv
 
-[redis]
-host = localhost
-port = 6379
-queue_db = 1
-password = 
+        daily:                                # 日线
+            path: F:\csv\daily                # 日k保存地址
+            file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
+
+        weekly:
+            path: F:\csv\weekly               # 周k保存地址
+            file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
+
+        monthly:
+            path: F:\csv\monthly              # 月k保存地址
+            file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
 ```
 
 #### 代码的文件及说明
 - create_tables 文件夹，里面放的是数据库建表语句，导入或者当个执行建表
 - data_urls.py，数据接口链接地址
-- conf.ini，配置文件地址
+- config.yaml，配置文件地址
 - comm_funcs.py，公用的方法/类库
 - coroutine_balancesheets_down.py，资产负债表下载程序，里面附有示例
 - coroutine_cashflow_down.py，现金流量表下载程序，附有使用示例
@@ -77,7 +87,7 @@ password =
 - coroutine_suspended_down.py，停复牌信息下载程序，附有使用示例
 - coroutine_unlocked_down.py，解禁个股信息下载程序，附有使用示例
 - coroutine_tradedetail_down.py，个股每日交易信息下载程序，附有使用示例
-- history_trade_down.py，历史交易数据下载
+- history_trade_down.py，历史交易数据下载(重新编写后的)
 - coroutine_lhblist_down.py，龙虎榜数据下载
 - financing_notices_down.py，公告下载
 - concepts_down.py 个股概念板块下载
