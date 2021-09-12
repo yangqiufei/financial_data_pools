@@ -214,12 +214,12 @@ def get_cashflow_url(**kwargs):
     return cash_flow_url(**kwargs)
 
 
-def get_trade_date_detail_url(**kwargs):
-    '''
+def a_detail_url(**kwargs):
+    """
     获取每日交易信息
     :param kwargs: 
     :return: 
-    '''
+    """
     domain = 'http://88.push2.eastmoney.com/api/qt/clist/get'
     ut = 'bd1d9ddb04089700cf9c27f6f7426281'
     fs = 'm:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:1+t:23'
@@ -278,6 +278,7 @@ def get_lhb_detail_url(**kwargs):
 
     return url.format(param_date, param_code)
 
+
 def get_bar():
     '''
     获取上证指数等
@@ -285,6 +286,7 @@ def get_bar():
     '''
     url = 'http://push2.eastmoney.com/api/qt/ulist.np/get?ut=6d2ffaa6a585d612eda28417681d58fb&fields=f1,f2,f3,f4,f14&secids=1.000001,0.399001,0.399006,1.000300&cb=&_=1609909795250'
     return url
+
 
 def get_leader_url(**kwargs):
     '''
@@ -297,6 +299,7 @@ def get_leader_url(**kwargs):
     param_psize = kwargs.get('psize', '200')
     url = '{}?CategoryCode=112&startIndex={}&pageSize={}'
     return url.format(domain, param_start, param_psize)
+
 
 def get_history_trade_list(**kwargs):
     '''
@@ -319,6 +322,7 @@ def get_history_trade_list(**kwargs):
     url = '{}?code={}&end={}&fields={}'.format(domain, item_code, end_trade_date, fields)
     return url
 
+
 def get_notice_url(**kwargs):
     '''
     获取公告
@@ -338,6 +342,7 @@ def get_notice_url(**kwargs):
     url = '{}StockCode=&FirstNodeType={}&CodeType=A&PageIndex={}&PageSize={}&jsObj=&SecNodeType=0&Time={}&rt={}'
     return url.format(domain, param_type, param_page, param_psize, param_time, rt)
 
+
 def get_financing_notice_url(**kwargs):
     '''
     获取定增公告
@@ -348,6 +353,7 @@ def get_financing_notice_url(**kwargs):
         get_notice_url,
         notice_type='2')
     return url(**kwargs)
+
 
 def get_concept_url(**kwargs):
     '''
@@ -363,6 +369,7 @@ def get_concept_url(**kwargs):
 
     return url
 
+
 def get_hsgt_url(**kwargs):
     '''
     获取沪深港通总体流入流出的信息
@@ -377,10 +384,12 @@ def get_hsgt_url(**kwargs):
     url = '{}&token={}&st=HdDate&sr=-1&p={}&ps={}&js={"pages":(tp),"data":(x)}&filter=(Market=%27005%27)&rt=53676010'
     return url.format(domain, token, param_page, param_psize)
 
+
 def get_sz_url(**kwargs):
     domain = 'http://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.000001'
     url = '{}&fields1=f1&fields2=f51,f53&klt=101&fqt=0&lmt=600&end=29991010&ut=b2884a393a59ad64002292a3e90d46a5&cb=&_=1610281943586'
     return url.format(domain)
+
 
 def get_hsgt_detail_url(**kwargs):
     '''
@@ -397,3 +406,33 @@ def get_hsgt_detail_url(**kwargs):
     js = '{%22pages%22:(tp),%22data%22:(x)}'
     url = '{}?type={}&token={}&st={}&sr=-1&p={}&ps={}&js={}&filter=(DateType=%271%27%20and%20HdDate=%27{}%27)&rt=53677975'
     return url.format(domain, url_type, token, st, param_page, param_psize, js, param_date)
+
+
+def a_stock_history_list_url(**kwargs):
+    """
+    a股历史行情数据
+    :param kwargs:
+    :return:
+    """
+
+    adjust_dict = {"qfq": "1", "hfq": "2", "": "0"}
+    period_dict = {'daily': '101', 'weekly': '102', 'monthly': '103'}
+
+    symbol = kwargs.get("symbol")
+    adjust = kwargs.get("adjust", "")
+    period = kwargs.get('period', 'daily')
+
+    timestamp = int(round(time.time(), 3) * 1000)
+
+    code_type = '0'
+    if symbol[0:1] == "6":
+        code_type = '1'
+
+    domain = "http://push2his.eastmoney.com/api/qt/stock/kline/get"
+    param = "?fields1={}&fields2={}&ut={}&klt={}&fqt={}&secid={}&beg=0&end=20500000&_={}"
+    fields1 = "f1,f2,f3,f4,f5,f6"
+    fields2 = "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+    ut = "7eea3edcaed734bea9cbfc24409ed989"
+    secid = "{}.{}".format(code_type, symbol)
+    param = param.format(fields1, fields2, ut, period_dict[period], adjust_dict[adjust], secid, timestamp)
+    return ''.join([domain, param])

@@ -1,51 +1,34 @@
+# -*- coding:utf-8 -*-
+# /usr/bin/env python
 """
 公用函数库/类
 """
-
-
 import random
 import requests
 import datetime
-from redis import StrictRedis
-import pymysql
 import json
-import time
 import calendar
-import sqlalchemy
-import configparser
-import sys
 import os
+import pandas as pd
 import threading
-from abc import ABCMeta, abstractmethod
 import aiohttp
+import yaml
+import akshare as ak
+import smtplib
+from email.mime.text import MIMEText
 
 
 def ua_random():
-    '''
+    """
     随机获取一个user-agent
     :return: user-agent
-    '''
+    """
     user_agent_list = [
-        'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
-        'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
-        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
-        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
-        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv,2.0.1) Gecko/20100101 Firefox/4.0.1",
-        "Mozilla/5.0 (Windows NT 6.1; rv,2.0.1) Gecko/20100101 Firefox/4.0.1",
-        "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) Presto/2.8.131 Version/11.11",
-        "Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11",
-        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon 2.0)",
-        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; TencentTraveler 4.0)",
-        " Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_0) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11",
-        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
-        "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
-        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.0 Safari/536.3",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
-        "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24"]
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/91.0.4472.124 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/51.0.2704.79 Safari/537.36 Edge/14.14393"
+    ]
 
     return random.choice(user_agent_list)
 
@@ -55,8 +38,8 @@ async def async_crawl(url):
         'user-agent': ua_random()
     }
     async with aiohttp.ClientSession() as session:
-        async with session.get(url,headers=header) as respose:
-            return await respose.text()
+        async with session.get(url, headers=header) as response:
+            return await response.text()
 
 
 def requests_get(url):
@@ -88,44 +71,10 @@ def except_handle(exception_handle):
     print(exception_handle)
 
 
-def get_mysql_client():
-    """
-    获取数据库连接
-    :return:
-    """
-    db_config = {
-        'host': get_config('mysql', 'host'),
-        'user': get_config('mysql', 'user'),
-        'password': get_config('mysql', 'password'),
-        'database': get_config('mysql', 'database'),
-        'port': int(get_config('mysql', 'port')),
-        'charset': get_config('mysql', 'charset'),
-    }
-    return pymysql.connect(**db_config)
-
-
-def get_redis_client():
-    """
-    获取redis连接
-    :return:
-    """
-    redis_host = get_config('redis', 'host')
-    redis_port = int(get_config('redis', 'port'))
-    redis_queue_db = int(get_config('redis', 'queue_db'))
-    redis_passwd = get_config('password', None)
-    return StrictRedis(
-        host=redis_host,
-        port=redis_port,
-        db=redis_queue_db,
-        password=redis_passwd,
-        decode_responses=True)
-
-
 def get_page_num(url):
     """
     获取分页数量
-    :param fd: 日期
-    :return: str,分页数量
+    :param url:
     """
     try:
         requests_text = requests_get(url)
@@ -133,30 +82,6 @@ def get_page_num(url):
     except Exception as e:
         # 传给异常处理函数
         except_handle(e)
-
-
-def down_thread(data_queue, page_queue):
-    """
-    下载接口数据并存入队列
-    :param page_queue: 待下载的url队列
-    :param data_queue: 下载后的内容队列
-    :return:
-    """
-    # redis连接
-    redis_client = get_redis_client()
-
-    while True:
-        try:
-            url = redis_client.lpop(page_queue)
-            if not url:
-                break
-
-            data = requests_get(url)
-            redis_client.rpush(data_queue, data)
-            time.sleep(1)
-        except Exception as e:
-            # 传给异常处理函数
-            except_handle(e)
 
 
 def time_last_day_of_month(year=None, month=None):
@@ -176,247 +101,213 @@ def time_last_day_of_month(year=None, month=None):
     return '-'.join([str(year), str(month), str(day)])
 
 
-def get_db_engine_for_pandas():
-    host = get_config('mysql', 'host')
-    user = get_config('mysql', 'user')
-    password = get_config('mysql', 'password')
-    database = get_config('mysql', 'database')
-    port = get_config('mysql', 'port')
-
-    cnf = "mysql+pymysql://{}:{}@{}:{}/{}".format(
-        user, password, host, port, database)
-    return sqlalchemy.create_engine(cnf)
-
-
-class ConfigParser(configparser.RawConfigParser):
-    def __init__(self, **kwargs):
-        kwargs['allow_no_value'] = True
-        configparser.RawConfigParser.__init__(self, **kwargs)
-
-    def __remove_quotes(self, value):
-        quotes = ["'", "\""]
-        for quote in quotes:
-            if len(value) >= 2 and value[0] == value[-1] == quote:
-                return value[1:-1]
-        return value
-
-    def get(self, section, option):
-        value = configparser.RawConfigParser.get(self, section, option)
-        return self.__remove_quotes(value)
-
-
-class MultiThread(threading.Thread):
-    ''' 多线程类, 使用redis作为队列 '''
-
-    def __init__(self, func, data_queue, page_queue=None):
-        super().__init__()
-        self.func = func
-        self.page_queue = page_queue
-        self.data_queue = data_queue
-
-    def run(self):
-        '''
-        重写run方法
-        '''
-        print('启动爬取线程 {}'.format(self.name))
-        self.scheduler()
-        print('结束爬取线程 {}'.format(self.name))
-
-    # 任务调度
-    def scheduler(self):
-        if self.page_queue and len(self.page_queue):
-            # 爬虫
-            self.func(self.data_queue, self.page_queue)
-        else:
-            # 解析数据
-            self.func(self.data_queue)
-
-
-def get_config(read_default_group, key, arg=None):
+class YamlConfigParser(object):
     """
-    获取配置值
-    :param key:
+    单例模式
+    """
+    _instance_lock = threading.Lock()
+    _conf = None
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def get_config(cls):
+        return cls._conf
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(YamlConfigParser, "_instance"):
+            with YamlConfigParser._instance_lock:
+                if not hasattr(YamlConfigParser, "_instance"):
+                    YamlConfigParser._instance = object.__new__(cls)
+
+                    # 读取配置
+                    work_path = os.path.dirname(os.path.realpath(__file__))
+                    yaml_file = os.path.join(work_path, 'config.yaml')
+                    with open(yaml_file, 'r', encoding="utf-8") as file:
+                        file_data = file.read()
+
+                    yaml_config = yaml.safe_load(file_data)
+                    setattr(YamlConfigParser, "_conf", yaml_config)
+
+        return YamlConfigParser._instance
+
+
+def get_config(read_default_group=None, key=None):
+    """
+    获取yaml文件参数
+    :param read_default_group: 参数分类，可选，如果不传则返回整个yaml配置
+    :param key: 参数名，可选，必须和read_default_group一起使用
+    :return:dict|string
+    """
+    config_parser = YamlConfigParser()
+    yaml_global_config = config_parser.get_config()
+
+    # 如果不为空，则取值
+    if read_default_group is not None:
+        if read_default_group not in yaml_global_config:
+            raise KeyError("配置项 {} 不存在".format(read_default_group))
+
+        group_config = yaml_global_config[read_default_group]
+        if key is not None:
+            if key not in group_config:
+                raise KeyError("配置项 {} 中 {} 不存在".format(read_default_group, key))
+
+            # 返回单个配置值
+            return group_config[key]
+
+        # 返回分类配置所有值
+        return group_config
+
+    # 返回整个配置
+    return yaml_global_config
+
+
+def send_main(contents='', subject='', receivers=None):
+    """
+    发送邮件
+    :param contents: 发送内容
+    :param subject:  发送主题
+    :param receivers: 接收人
     :return:
     """
-    if arg:
-        return arg
+    # 设置服务器所需信息
+    mail_config = get_config()
+    mail_host = mail_config['email']['mail_host']
+
+    # 用户名
+    mail_user = mail_config['email']['mail_user']
+
+    # 密码(部分邮箱为授权码)
+    mail_pass = mail_config['email']['mail_pass']
+
+    # 邮件发送方邮箱地址
+    sender = mail_config['email']['mail_sender']
+
+    if receivers is None:
+        # 邮件接受方邮箱地址，注意需要[]包裹，这意味着你可以写多个邮件地址群发
+        receivers = ['1762934298@qq.com']
+    elif not isinstance(receivers, list):
+        raise TypeError("邮箱类型必须为列表")
+
+    # 邮件内容设置纯文本
+    message = MIMEText(contents, 'plain', 'utf-8')
+
+    # 邮件主题
+    message['Subject'] = subject
+
+    # 发送方信息
+    message['From'] = sender
+
+    # 接受方信息
+    message['To'] = receivers[0]
 
     try:
-        cfg = ConfigParser()
-        if sys.platform.startswith("win"):
-            work_path = os.path.dirname(os.path.realpath(__file__))
-            read_default_file = os.path.join(work_path, 'conf.ini')
-        else:
-            work_path = os.path.dirname(os.path.realpath(__file__))
-            read_default_file = os.path.join(work_path, 'conf.cnf')
+        smtp_obj = smtplib.SMTP()
 
-        cfg.read(os.path.expanduser(read_default_file))
-        return cfg.get(read_default_group, key)
-    except Exception:
-        return arg
+        # 连接到服务器
+        smtp_obj.connect(mail_host, 25)
+
+        # 登录到服务器
+        smtp_obj.login(mail_user, mail_pass)
+
+        # 发送
+        smtp_obj.sendmail(sender, receivers, message.as_string())
+
+        # 退出
+        smtp_obj.quit()
+
+        return True
+    except smtplib.SMTPException as e:
+        raise smtplib.SMTPException(e)
 
 
-class HeyRun(metaclass=ABCMeta):
-    """多线程中主程序运行类"""
+def get_csv_path(symbol, period="daily") -> str:
+    """
+    获取个股本地csv路径
+    :param period: 日线：daily； 周线：weekly; 月线： monthly
+    :param symbol: 个股代码
+    :return:
+    """
+    config = get_config("save_path")
+    save_file_path = config["stock"][period]["path"]
+    save_file_name = config["stock"][period]["file_name"].replace("<<stock_code>>", symbol)
+    return os.path.join(save_file_path, save_file_name)
 
-    def __init__(
-            self,
-            data_queue='data_queue',
-            page_queue='page_queue',
-            crawl_num=5,
-            parser_num=5):
-        '''
-        数据下载和数据解析初始化
-        :param data_queue: 数据储存的队列名称，默认data_queue
-        :param page_queue: 分页链接的队列名称，默认page_queue
-        :param crawl_num: 开启接口线程数量，默认5个线程
-        :param parser_num: 开启数据解析线程数量，默认5个线程
-        '''
-        self._page_queue = page_queue
-        self._data_queue = data_queue
-        self._crawl_num = crawl_num
-        self._parser_num = parser_num
 
-    @property
-    def page_queue(self):
-        return self._page_queue
+def get_symbol(
+        symbol: str,
+        period: str = "daily",
+        adjust: str = "",
+        start_date: str = "",
+        end_date: str = "",
+        downloaded: bool = True
+):
+    """
+    获取df
+    :param symbol: 个股代码
+    :param period: 日线：daily； 周线：weekly; 月线： monthly
+    :param adjust: 复权类型，前复权："qfq"；后复权："hfq"；"不复权"：""， 默认不复权
+    :param start_date: 开始时间
+    :param end_date: 结束时间
+    :param downloaded: 是否需要下载到本地
+    :return:
+    """
+    file_name = get_csv_path(symbol, period)
 
-    @page_queue.setter
-    def page_queue(self, page_queue):
-        if isinstance(page_queue, str):
-            self._page_queue = page_queue
-        else:
-            raise TypeError('分页队列名称必须为字符串')
+    # 优先下载最新的到本地
+    if downloaded:
+        return down_symbol(symbol, period, is_return=True)
 
-    @property
-    def data_queue(self):
-        return self._data_queue
+    if len(end_date):
+        end_date = get_current_date().replace('-', '')
 
-    @data_queue.setter
-    def data_queue(self, data_queue):
-        if isinstance(data_queue, str):
-            self._data_queue = data_queue
-        else:
-            raise TypeError('数据队列名称必须为字符串')
+    if os.path.exists(file_name):
+        return pd.read_csv(file_name)
+        # df.set_index('trade_date', inplace=True, drop=False)
+        # df.sort_index(ascending=True, inplace=True)
+    else:
+        param = {
+            "symbol": symbol,
+            "period": period,
+            "start_date": start_date,
+            "end_date": end_date,
+            "adjust": adjust,
+        }
+        return ak.stock_zh_a_hist(**param)
 
-    @property
-    def crawl_num(self):
-        return self._crawl_num
 
-    @crawl_num.setter
-    def crawl_num(self, num):
-        if isinstance(num, int) and num > 0:
-            self._crawl_num = num
-        else:
-            raise TypeError('下载数据线程数量必须为整数且大于0')
+def down_symbol(
+        symbol: str,
+        period: str = "daily",
+        start_date: str = "20000102",
+        is_return: bool = False,
+        adjust: str = ""
+) -> pd.DataFrame:
+    """
+    下载个股记录并保存为csv到本地
+    :param symbol: 个股代码
+    :param period: 日线：daily； 周线：weekly; 月线： monthly
+    :param start_date: 开始时间，默认为20000102
+    :param is_return: 是否需要返回
+    :param adjust: 复权类型，前复权："qfq"；后复权："hfq"；"不复权"：""， 默认不复权
+    :return: any
+    """
+    try:
+        save_filename = get_csv_path(symbol, period)
+        param = {
+            "symbol": symbol,
+            "period": period,
+            "start_date": start_date,
+            "end_date": get_current_date().replace('-', ''),
+            "adjust": adjust,
+        }
+        symbol_df = ak.stock_zh_a_hist(**param)
+        symbol_df.to_csv(save_filename, index=False)
 
-    @property
-    def parser_num(self):
-        return self._parser_num
+        if is_return:
+            return symbol_df
 
-    @parser_num.setter
-    def parser_num(self, num):
-        if isinstance(num, int) and num > 0:
-            self._parser_num = num
-        else:
-            raise TypeError('下载数据线程数量必须为整数且大于0')
+    except Exception as e:
+        raise ValueError('{}下载失败,原因: {}'.format(symbol, e))
 
-    @abstractmethod
-    def get_down_url(self):
-        ''' 返回的下载链接 '''
-        pass
-
-    @abstractmethod
-    def data_parser(self):
-        '''
-        数据解析的主要方法，存入数据库等
-        :return:
-        '''
-        pass
-
-    @abstractmethod
-    def get_data_pages(self, **kwargs):
-        '''
-        获取数据分页数量
-        :param kwargs: 参数信息参照data_url各个接口地址参数
-        :return:
-        '''
-        pass
-
-    @abstractmethod
-    def colunm(self):
-        ''' 需要提取的字段 '''
-        pass
-
-    def push_pages_to_queue(self, **kwargs):
-        '''
-        将分页后的链接接口地址写入队列
-        :param kwargs:
-        :return:
-        '''
-        self.pages = self.get_data_pages(**kwargs)
-        redis_client = get_redis_client()
-
-        # 任务队列，存放url的队列
-        for page in range(1, (self.pages + 1)):
-            down_url = self.get_down_url(page=page, **kwargs)
-            redis_client.rpush(self.page_queue, down_url)
-
-    def down_run(self, **kwargs):
-        self.push_pages_to_queue(**kwargs)
-
-        if self.pages == 0:
-            raise ValueError('分页数量为0')
-
-        # 分页数量大于5以上开启多线程,否则没有意义
-        if self.pages > 5 and self._crawl_num > 1:
-
-            crawl_threads = []
-            for i in range(1, (self._crawl_num + 1)):
-                thread = MultiThread(
-                    down_thread,
-                    self.data_queue,
-                    self.page_queue)
-                thread.start()
-                crawl_threads.append(thread)
-
-            # 结束爬虫线程
-            for t in crawl_threads:
-                t.join()
-        else:
-            down_thread(self.data_queue, self.page_queue)
-
-    def parser_run(self):
-        '''
-        从队列中取出数据并解析数据
-        :return:
-        '''
-        if self.pages == 0:
-            raise ValueError('分页数量为0')
-
-        if self.pages > 5 and self._parser_num > 1:
-            parser_threads = []
-            for i in range(1, (self._crawl_num + 1)):
-                thread = threading.Thread(
-                    target=self.data_parser, args=())
-                thread.start()
-                parser_threads.append(thread)
-
-            # 结束数据解析线程
-            for t in parser_threads:
-                t.join()
-        else:
-            self.data_parser()
-
-    def run(self, **kwargs):
-        '''
-        下载数据时，也可以直接运行对象中down_run和parser_run
-        这里直接给出两个合并
-        :param kwargs:这里的参数是data_url
-        :return:
-        '''
-        # 下载数据到队列中
-        self.down_run(**kwargs)
-
-        # 解析队列中的数据，并存入数据库中
-        self.parser_run()

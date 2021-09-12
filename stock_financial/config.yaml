@@ -1,0 +1,40 @@
+mysql:
+    host: localhost
+    port: 3306
+    user: root
+    password: root
+    database: stock
+    charset: utf8mb4
+
+redis:
+    host: localhost
+    port: 6379
+    queue_db: 0
+    password:
+
+# 邮箱提醒服务
+email:
+    mail_host: smtp.qq.com               # 邮件服务器地址
+    mail_user: q                         # 邮箱用户
+    mail_pass: xx                        # 邮箱密码/验证码
+    mail_sender: xx@qq.com               # 发送邮箱
+
+# 本地保存路径
+save_path:
+    stock:              # A股
+        detail:         # 每日交易数据
+            path: F:\csv\detail
+            file_name: <<date>>.csv
+
+        daily:                                # 日线
+            path: F:\csv\daily                # 日k保存地址
+            file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
+
+        weekly:
+            path: F:\csv\weekly               # 周k保存地址
+            file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
+
+        monthly:
+            path: F:\csv\monthly              # 月k保存地址
+            file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
+
