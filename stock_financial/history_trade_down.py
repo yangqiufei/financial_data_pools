@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     # 下载前复权和日线
     main(adjust="qfq", period="daily")
-    down_symbol(symbol="601899")
+    # down_symbol(symbol="601899")
 
     end_time = time.time()
     total_time = end_time - begin_time

@@ -9,6 +9,7 @@ Desc: 东方财富网-行情首页-上证 A 股-每日行情
 使用示例（直接运行main函数，获取最近一个交易日的交易信息）：
 main()
 """
+import datetime
 import time
 import json
 import pandas as pd
@@ -16,6 +17,7 @@ import os
 from data_urls import a_detail_url as url
 from comm_funcs import requests_get
 from comm_funcs import get_config
+from comm_funcs import find_trade_date
 
 
 def main(page_size: int = 6000) -> pd.DataFrame:
@@ -32,7 +34,6 @@ def main(page_size: int = 6000) -> pd.DataFrame:
         detail_df = pd.DataFrame(data)
         save_df = detail_df.loc[:, ['f12', 'f14', 'f17', 'f15', 'f16', 'f2', 'f18', 'f4', 'f3',
                                     'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f20', 'f21']]
-        save_df['f12'] = save_df['f12'].map(lambda x: ";" + x)
 
         # 去掉没有交易的
         find_index = save_df[save_df["f15"] == "-"].index
@@ -77,19 +78,21 @@ def main(page_size: int = 6000) -> pd.DataFrame:
         return save_df
 
 
-def save(save_df: pd.DataFrame, save_path: str = '', file_name: str = ''):
+def save(save_df: pd.DataFrame):
     """
     :param save_df:
-    :param save_path: 保存路径，如果为空，则不保存
-    :param file_name: 保存的文件名，csv结尾，如2021-09-10.csv
     :return:
     """
     try:
-        if save_path and file_name:
-            file_name.replace('.csv', '')
-            save_name = os.path.join(save_path, file_name)
-            if save_name:
-                save_df.to_csv(save_name, index=False)
+        config = get_config("save_path")
+        save_path = config["stock"]["detail"]["path"]
+        today = find_trade_date(return_format="str")
+        file_name = config["stock"]["detail"]["file_name"].replace("<<date>>", today)
+        file_name.replace('.csv', '')
+        save_name = os.path.join(save_path, file_name)
+        if save_name:
+            save_df['股票代码'] = save_df['股票代码'].map(lambda x: ";" + x)
+            save_df.to_csv(save_name, index=False)
         return True
     except:
         return False
@@ -103,9 +106,7 @@ if __name__ == '__main__':
     print(df)
 
     # 保存到本地
-    config = get_config("save_path")
-    save_file_path = config["stock"]["detail"]["path"]
-    save_file_name = config["stock"]["detail"]["file_name"].replace("<<date>>", "2021-09-10")
-    save(df, save_file_path, save_file_name)
+
+    save(df)
     total_time = time.time() - begin_time
     print(total_time)

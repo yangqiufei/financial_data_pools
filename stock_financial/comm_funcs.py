@@ -311,3 +311,42 @@ def down_symbol(
     except Exception as e:
         raise ValueError('{}下载失败,原因: {}'.format(symbol, e))
 
+
+def find_trade_date(return_format="date", trade_date=None):
+    """
+    返回最近一个交易日
+    :param return_format: 返回的格式，date: 返回 datetime.date; int: 返回整型，如：20210917；str: 返回字符串格式，如2021-09-17
+    :param trade_date: 如果传值了，查找距离该值最近的交易日，比如2021-09-18（周六），最近的交易日是2021-09-17；
+    如果传值的日期是交易日，则返回本身；因此也可以作为判断某天是否是交易日（只需要判断返回值和传值是否相等）
+    :return:
+    """
+    if trade_date is None:
+        trade_date = datetime.datetime.now().date()
+
+    if not isinstance(trade_date, datetime.date):
+        # 如果提交的不是datetime，做一个转换
+        if isinstance(trade_date, str):
+            year, month, day = trade_date.split('-')
+            trade_date = datetime.date(int(year), int(month), int(day))
+
+        if isinstance(trade_date, int):
+            year = int(str(trade_date)[0:4])
+            month = int(str(trade_date)[4:6])
+            day = int(str(trade_date)[6:8])
+            trade_date = datetime.date(int(year), int(month), int(day))
+
+    df = ak.tool_trade_date_hist_sina()
+    today_df = df.loc[df['trade_date'] == trade_date]
+    if today_df.empty:
+        # 继续寻找
+        today_df = df.loc[df['trade_date'] < trade_date].tail(1)
+
+    last_trade_date = today_df['trade_date'].values[0]
+
+    if return_format == 'int':
+        return int(str(last_trade_date).replace('-', ''))
+
+    if return_format == 'str':
+        return str(last_trade_date)
+
+    return last_trade_date
