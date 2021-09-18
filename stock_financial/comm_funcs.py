@@ -299,7 +299,7 @@ def down_symbol(
             "symbol": symbol,
             "period": period,
             "start_date": start_date,
-            "end_date": get_current_date().replace('-', ''),
+            "end_date": find_trade_date(return_format="str").replace('-', ''),
             "adjust": adjust,
         }
         symbol_df = ak.stock_zh_a_hist(**param)
