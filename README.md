@@ -1,6 +1,9 @@
 ### 重新编写了获取历史交易数据
 需要下载的包：`akshare`；通过 `pip install akshare` 安装。
 
+### 更新了配置文件为yaml格式
+需要下载的包：`PyYAML`；通过 `pip install PyYAML` 安装。
+
 ### 新增同花顺操作文件，通过操作同花顺进行自动化交易
 需要下载的包：`pyperclip`、`pywinauto`、`pandas`；通过`pip install` 安装即可。
 
@@ -43,7 +46,8 @@ seaborn==0.11.0
 selenium==3.141.0
 SQLAlchemy==1.4.22
 lxml==4.6.3
-akshare==1.0.90
+PyYAML==5.4.1
+akshare
 ```
 
 
