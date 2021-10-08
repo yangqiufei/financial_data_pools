@@ -9,15 +9,15 @@ import time
 import json
 import pandas as pd
 import os
+import asyncio
+
 from data_urls import get_lhb_list_url
 from data_urls import get_lhb_detail_url
 from comm_funcs import async_crawl
 from comm_funcs import get_config
-from comm_funcs import get_current_date
 from comm_funcs import find_trade_date
 from comm_funcs import requests_get
 from comm_funcs import except_handle
-import asyncio
 
 
 async def parse_detail(item_code, trade_date):
