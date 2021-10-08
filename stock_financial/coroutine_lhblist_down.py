@@ -21,6 +21,12 @@ import asyncio
 
 
 async def parse_detail(item_code, trade_date):
+    """
+    协程获取个股龙虎榜信息
+    :param item_code:
+    :param trade_date:
+    :return:
+    """
     url = get_lhb_detail_url(item_code=item_code, trade_date=trade_date)
     response = await async_crawl(url)
     res = json.loads(response)
@@ -86,6 +92,12 @@ def get_list(begin_date, end_date, is_save=True):
 
 
 def detail(begin_date, end_date):
+    """
+    获取龙虎榜个股详情信息
+    :param begin_date:
+    :param end_date:
+    :return:
+    """
     try:
         data_list = get_list(begin_date, end_date, is_save=False)
 
@@ -94,14 +106,13 @@ def detail(begin_date, end_date):
         # 龙虎榜详情使用协程创建任务
         loop = asyncio.get_event_loop()
         tasks = [
-            loop.create_task(parse_detail(item_code, trade_date)) for row in target_data for item_code, trade_date in row.items()]
+            loop.create_task(parse_detail(item_code, trade_date))
+            for row in target_data for item_code, trade_date in row.items()]
         loop.run_until_complete(asyncio.wait(tasks))
 
         all_df = pd.DataFrame()
         for t in tasks:
             res = t.result()
-            # print(res)
-            # exit()
             for r in res["BuySaleList"]:
                 buy_df = pd.DataFrame(r["BuyList"])
                 buy_df["类型"] = "买入"
