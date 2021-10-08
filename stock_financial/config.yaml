@@ -21,7 +21,9 @@ email:
 
 # 本地保存路径
 save_path:
-    stock:              # A股
+
+    # A股
+    stock:
         detail:         # 每日交易数据
             path: F:\csv\detail
             file_name: <<date>>.csv
@@ -37,4 +39,18 @@ save_path:
         monthly:
             path: F:\csv\monthly              # 月k保存地址
             file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
+
+    # 港股
+    hk:
+        detail: # 港股每日交易数据
+            path: F:\csv\hk\detail
+            file_name: <<date>>.csv
+
+    # 龙虎榜，必须保证目录要存在，如果不存在，请创建目录，比如创建 F:\csv\lhb 目录
+    lhb:
+        detail:
+            file_name: F:\csv\lhb\detail.csv
+
+        list:
+            file_name: F:\csv\lhb\list.csv
 

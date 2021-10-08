@@ -78,9 +78,9 @@ def get_unlocked_url(**kwargs):
 
     today_date = get_current_date()
     end_date = (
-        datetime.datetime.now() +
-        datetime.timedelta(
-            days=700)).strftime('%Y-%m-%d')
+            datetime.datetime.now() +
+            datetime.timedelta(
+                days=700)).strftime('%Y-%m-%d')
 
     param_begin_date = kwargs.get('begin_date', today_date)
     param_end_date = kwargs.get('end_date', end_date)
@@ -226,7 +226,7 @@ def a_detail_url(**kwargs):
     fields = 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f11'
     timestamp = int(round(time.time(), 3) * 1000)
     param_page = kwargs.get('page', '1')
-    param_psize = kwargs.get('psize', '100')
+    param_psize = kwargs.get('psize', '200')
     url = '{}?cb=&pn={}&pz={}&po=1&np=1&ut={}&fltt=2&invt=2&fid=f3&fs={}&fields={}&_={}'.format(
         domain,
         param_page,
@@ -241,16 +241,16 @@ def a_detail_url(**kwargs):
 
 
 def get_lhb_list_url(**kwargs):
-    '''
+    """
     获取龙虎版列表信息
     :param kwargs: 
     :return: 
-    '''
+    """
     domain = 'http://data.eastmoney.com/DataCenter_V3/stock2016/TradeDetail/'
     today_date = get_current_date()
     timestamp = int(time.time() / 6)
     param_page = kwargs.get('page', '1')
-    param_psize = kwargs.get('psize', '200')
+    param_psize = kwargs.get('psize', '500')
     param_begin_date = kwargs.get('begin_date', today_date)
     param_end_date = kwargs.get('end_date', today_date)
     url = '{}pagesize={},page={},sortRule=-1,sortType=,startDate={},endDate={},gpfw=0,js=.html?rt={}'.format(
@@ -266,17 +266,28 @@ def get_lhb_list_url(**kwargs):
 
 
 def get_lhb_detail_url(**kwargs):
-    '''
+    """
     获取个股龙虎榜详情信息
-    :param kwargs: 
-    :return: 
-    '''
-    url = 'http://data.eastmoney.com/stock/lhb,{},{}.html'
+    :param kwargs:
+    :return:
+    """
+    url = 'https://datapc.eastmoney.com/emdatacenter/ranking/getbuyandsale?code={}&fd={}'
     today_date = get_current_date()
     param_code = kwargs.get('item_code')
+
+    # 格式为：2021-09-09
     param_date = kwargs.get('trade_date', today_date)
 
-    return url.format(param_date, param_code)
+    return url.format(param_code, param_date)
+
+
+def get_lhb_date_by_code(item_code):
+    """
+    查询个股龙虎榜时间
+    :param item_code: 个股代码
+    :return:
+    """
+    return "http://datapc.eastmoney.com/emdatacenter/ranking/getrankingdaysbystockcode?code={}".format(item_code)
 
 
 def get_bar():
@@ -436,3 +447,30 @@ def a_stock_history_list_url(**kwargs):
     secid = "{}.{}".format(code_type, symbol)
     param = param.format(fields1, fields2, ut, period_dict[period], adjust_dict[adjust], secid, timestamp)
     return ''.join([domain, param])
+
+
+def hk_detail_url(**kwargs):
+    """
+    获取每日交易信息
+    :param kwargs:
+    :return:
+    """
+    domain = 'http://72.push2.eastmoney.com/api/qt/clist/get?'
+    ut = 'bd1d9ddb04089700cf9c27f6f7426281'
+    fs = 'm:128 t:3,m:128 t:4,m:128 t:1,m:128 t:2'
+    fields = 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,' \
+             'f23,f24,f25,f22,f11,f62,f128,f136,f115,f152'
+    timestamp = int(round(time.time(), 3) * 1000)
+    param_page = kwargs.get('page', '1')
+    param_psize = kwargs.get('pagesize', '10000')
+    url = '{}pn={}&pz={}&po=1&np=1&ut={}&fltt=2&invt=2&fid=f3&fs={}&fields={}&_={}'.format(
+        domain,
+        param_page,
+        param_psize,
+        ut,
+        fs,
+        fields,
+        timestamp
+    )
+
+    return url
