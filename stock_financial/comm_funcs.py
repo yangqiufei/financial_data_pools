@@ -381,8 +381,10 @@ def get_trade_detail(symbol: str = "", trade_date: str = "") -> dict:
 if __name__ == "__main__":
     # 测试
     item_code = "000100"
-    find_trade_date = find_trade_date("str")
+    # find_trade_date = find_trade_date("str")
+    find_trade_date = "2021-09-18"
     trade_detail = get_trade_detail(item_code, find_trade_date)
     print(trade_detail)
-    print(trade_detail["开盘"])
-    print(trade_detail["涨跌幅"])
+    if len(trade_detail) > 0:
+        print(trade_detail["开盘"])
+        print(trade_detail["涨跌幅"])
