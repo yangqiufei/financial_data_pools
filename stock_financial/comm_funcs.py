@@ -350,3 +350,39 @@ def find_trade_date(return_format="date", trade_date=None):
         return str(last_trade_date)
 
     return last_trade_date
+
+
+def get_trade_detail(symbol: str = "", trade_date: str = "") -> dict:
+    """
+    获取一个交易日交易信息
+    :param symbol: 代码
+    :type symbol: str
+    :param trade_date: 交易日
+    :type symbol: str
+    :return: 交易信息
+    :rtype: dict
+    """
+    param = {
+        "symbol": symbol,
+        "period": "daily",
+        "start_date": trade_date.replace("-", ""),
+        "end_date": trade_date.replace("-", ""),
+    }
+    symbol_df = ak.stock_zh_a_hist(**param)
+
+    if not symbol_df.empty:
+        key = symbol_df.columns.values
+        val = symbol_df.values[0]
+        return dict(zip(key, val))
+
+    return {}
+
+
+if __name__ == "__main__":
+    # 测试
+    item_code = "000100"
+    find_trade_date = find_trade_date("str")
+    trade_detail = get_trade_detail(item_code, find_trade_date)
+    print(trade_detail)
+    print(trade_detail["开盘"])
+    print(trade_detail["涨跌幅"])
