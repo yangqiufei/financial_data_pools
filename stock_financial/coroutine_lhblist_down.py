@@ -18,6 +18,7 @@ from comm_funcs import get_config
 from comm_funcs import find_trade_date
 from comm_funcs import requests_get
 from comm_funcs import except_handle
+from comm_funcs import get_db_engine_for_pandas
 
 
 async def parse_detail(item_code, trade_date):
@@ -150,15 +151,70 @@ def detail(begin_date, end_date):
         except_handle(e)
 
 
+def save_detail_to_db(begin_date, end_date):
+    """
+    获取龙虎榜个股详情信息
+    :param begin_date:
+    :param end_date:
+    :return:
+    """
+    try:
+        engine = get_db_engine_for_pandas()
+        data_list = get_list(begin_date, end_date, is_save=False)
+
+        target_data = [{r['SCode']: r['Tdate']} for r in data_list]
+
+        # 龙虎榜详情使用协程创建任务
+        loop = asyncio.get_event_loop()
+        tasks = [
+            loop.create_task(parse_detail(item_code, trade_date))
+            for row in target_data for item_code, trade_date in row.items()]
+        loop.run_until_complete(asyncio.wait(tasks))
+
+        all_df = pd.DataFrame()
+        for t in tasks:
+            res = t.result()
+            for r in res["BuySaleList"]:
+                buy_df = pd.DataFrame(r["BuyList"])
+                buy_df["direction"] = "BUY"
+                sale_df = pd.DataFrame(r["SaleList"][0:5])
+                sale_df["direction"] = "SELL"
+
+                df = buy_df.append(sale_df)
+                df.columns = ["sc_id", "serial_number", "sc_name", "buying", "buying_rate", "selling", "selling_rate",
+                              "net_amount", "direction"]
+
+                df["item_code"] = res["symbol"]
+                df["trade_date"] = res["trade_date"].replace("-", '')
+                df["causes"] = r["Title"]
+
+                all_df = pd.concat([df, all_df])
+
+        if not all_df.empty:
+            all_df["buying"] = all_df["buying"].map(lambda x: float(x))
+            all_df["selling"] = all_df["selling"].map(lambda x: float(x))
+
+            # 删除不需要的行
+            all_df.drop(axis=1, columns=["net_amount", "buying_rate", "selling_rate"], inplace=True)
+            all_df.to_sql(
+                name='s_lhb_detail',
+                con=engine,
+                if_exists='append',
+                index=False)
+
+    except Exception as e:
+        except_handle(e)
+
+
 if __name__ == '__main__':
     # 最近一个交易日市场的交易信息
     lhb_date = find_trade_date("str")
     begin_time = time.time()
-    # 获取列表
+    # 获取列表，存入本地文件
     # get_list("2021-09-17", "2021-09-17", True)
 
-    # 获取个股龙虎榜详情
-    detail("2021-09-17", "2021-09-17")
+    # 获取个股龙虎榜详情，存入数据库
+    save_detail_to_db(lhb_date, lhb_date)
     # detail(lhb_date, lhb_date)
 
     total_time = time.time() - begin_time

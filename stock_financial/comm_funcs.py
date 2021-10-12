@@ -407,6 +407,6 @@ def get_db_engine_for_pandas():
     host, user, password, database, port, charset = get_db_config()
     cnf = "mysql+pymysql://{}:{}@{}:{}/{}".format(
         user, password, host, port, database)
-    return sqlalchemy.create_engine(cnf)
-    # return sqlalchemy.create_engine(cnf, echo=True)
+    # return sqlalchemy.create_engine(cnf)
+    return sqlalchemy.create_engine(cnf, echo=True)
 
