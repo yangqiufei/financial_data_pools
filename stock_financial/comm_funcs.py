@@ -14,6 +14,7 @@ import threading
 import aiohttp
 import yaml
 import akshare as ak
+import sqlalchemy
 import smtplib
 from email.mime.text import MIMEText
 
@@ -378,13 +379,34 @@ def get_trade_detail(symbol: str = "", trade_date: str = "") -> dict:
     return {}
 
 
-if __name__ == "__main__":
-    # 测试
-    item_code = "000100"
-    # find_trade_date = find_trade_date("str")
-    find_trade_date = "2021-09-18"
-    trade_detail = get_trade_detail(item_code, find_trade_date)
-    print(trade_detail)
-    if len(trade_detail) > 0:
-        print(trade_detail["开盘"])
-        print(trade_detail["涨跌幅"])
+def get_db_config():
+    """
+    获取服务器链接
+    :return: host, user, password, database, port, charset
+    """
+    db_config = get_config()
+
+    if "mysql" in db_config:
+        host = db_config['mysql']['host']
+        user = db_config['mysql']['user']
+        password = db_config['mysql']['password']
+        database = db_config['mysql']['database']
+        port = db_config['mysql']['port']
+        charset = db_config['mysql']['charset']
+
+        return host, user, password, database, port, charset
+    else:
+        raise KeyError("mysql configuration must exist")
+
+
+def get_db_engine_for_pandas():
+    """
+    获取mysql连接，主要搭配pandas使用
+    :return:
+    """
+    host, user, password, database, port, charset = get_db_config()
+    cnf = "mysql+pymysql://{}:{}@{}:{}/{}".format(
+        user, password, host, port, database)
+    return sqlalchemy.create_engine(cnf)
+    # return sqlalchemy.create_engine(cnf, echo=True)
+
