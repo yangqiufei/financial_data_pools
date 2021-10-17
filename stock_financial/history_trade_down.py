@@ -27,7 +27,7 @@ def download(symbols: list, period: str = "daily", adjust: str = ""):
             for symbol in symbols:
                 down_symbol(symbol, period=period, adjust=adjust)
                 print("{} ok".format(symbol))
-                time.sleep(0.5)
+                # time.sleep(0.5)
         except ValueError as e:
             except_handle(e)
 
@@ -45,6 +45,8 @@ def main(page_size: int = 10000, period: str = "daily", adjust: str = ""):
     if "data" in res and "diff" in res["data"]:
         data = res['data']['diff']
         symbols = [item["f12"] for item in data if item['f15'] != "-"]
+        print(len(symbols))
+        exit()
 
         # 开启多线程
         crawl_num = 20
@@ -76,7 +78,7 @@ if __name__ == '__main__':
     begin_time = time.time()
 
     # 下载前复权和日线
-    main(adjust="qfq", period="daily")
+    main(adjust="hfq", period="daily")
     # down_symbol(symbol="601899")
 
     end_time = time.time()

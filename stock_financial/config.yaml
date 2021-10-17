@@ -54,3 +54,7 @@ save_path:
         list:
             file_name: F:\csv\lhb\list.csv
 
+cache:
+    ma_lte:
+        name: "ma_lte:<<date>>"
+        expire: 1296000

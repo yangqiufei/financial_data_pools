@@ -1,3 +1,7 @@
+### 绘制K线图代码示例
+需要下载的包：`mplfinance`；通过 `pip install mplfinance` 安装。
+
+
 ### 重新编写了获取历史交易数据
 需要下载的包：`akshare`；通过 `pip install akshare` 安装。
 

@@ -226,7 +226,7 @@ def a_detail_url(**kwargs):
     fields = 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f11'
     timestamp = int(round(time.time(), 3) * 1000)
     param_page = kwargs.get('page', '1')
-    param_psize = kwargs.get('psize', '200')
+    param_psize = kwargs.get('psize', '10000')
     url = '{}?cb=&pn={}&pz={}&po=1&np=1&ut={}&fltt=2&invt=2&fid=f3&fs={}&fields={}&_={}'.format(
         domain,
         param_page,

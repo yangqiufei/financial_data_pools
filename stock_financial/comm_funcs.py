@@ -17,6 +17,7 @@ import akshare as ak
 import sqlalchemy
 import smtplib
 from email.mime.text import MIMEText
+from redis import StrictRedis
 
 
 def ua_random():
@@ -281,7 +282,6 @@ def get_symbol(
 def down_symbol(
         symbol: str,
         period: str = "daily",
-        start_date: str = "20000102",
         is_return: bool = False,
         adjust: str = ""
 ) -> pd.DataFrame:
@@ -289,7 +289,6 @@ def down_symbol(
     下载个股记录并保存为csv到本地
     :param symbol: 个股代码
     :param period: 日线：daily； 周线：weekly; 月线： monthly
-    :param start_date: 开始时间，默认为20000102
     :param is_return: 是否需要返回
     :param adjust: 复权类型，前复权："qfq"；后复权："hfq"；"不复权"：""， 默认不复权
     :return: any
@@ -299,8 +298,6 @@ def down_symbol(
         param = {
             "symbol": symbol,
             "period": period,
-            "start_date": start_date,
-            "end_date": find_trade_date(return_format="str").replace('-', ''),
             "adjust": adjust,
         }
         symbol_df = ak.stock_zh_a_hist(**param)
@@ -409,4 +406,26 @@ def get_db_engine_for_pandas():
         user, password, host, port, database)
     # return sqlalchemy.create_engine(cnf)
     return sqlalchemy.create_engine(cnf, echo=True)
+
+
+def get_redis_client(db=None):
+    """
+    获取redis连接
+    :return:
+    """
+    redis_config = get_config()
+    redis_host = redis_config['redis']['host']
+    redis_port = int(redis_config['redis']['port'])
+    redis_queue_db = int(redis_config['redis']['queue_db'])
+    redis_passwd = redis_config['redis']['password']
+
+    if db is not None:
+        redis_queue_db = db
+
+    return StrictRedis(
+        host=redis_host,
+        port=redis_port,
+        db=redis_queue_db,
+        password=redis_passwd,
+        decode_responses=True)
 
