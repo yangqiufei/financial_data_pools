@@ -15,7 +15,7 @@ CREATE TABLE `s_financial_statements` (
   `yshz` double NOT NULL DEFAULT '0' COMMENT '营业收入环比增长（%）：YSHZ',
   `sjltz` double NOT NULL DEFAULT '0' COMMENT '净利润同比增长（%）：SJLTZ',
   `sjlhz` double NOT NULL DEFAULT '0' COMMENT '净利润环比增长（%）：SJLHZ',
-  `assigndscrpt` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '分配情况：ASSIGNDSCRPT',
+  `assigndscrpt` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '分配情况：ASSIGNDSCRPT',
   PRIMARY KEY (`id`),
   KEY `item_code` (`security_code`),
   KEY `report_date` (`reportdate`)

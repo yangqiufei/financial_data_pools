@@ -18,6 +18,7 @@ from data_urls import a_detail_url as url
 from comm_funcs import requests_get
 from comm_funcs import get_config
 from comm_funcs import find_trade_date
+from comm_funcs import get_db_engine_for_pandas
 
 
 def main(page_size: int = 6000) -> pd.DataFrame:
@@ -98,15 +99,71 @@ def save(save_df: pd.DataFrame):
         return False
 
 
-# https://github.com/huangsir250/financial_data_pools
+def columns_dict():
+    return {
+        'item_code': 'f12',
+        'item_name': 'f14',
+        'open': 'f17',
+        'high': 'f15',
+        'low': 'f16',
+        'close': 'f2',
+        'pre_close': 'f18',
+        'change': 'f4',
+        'pct_chg': 'f3',
+        'vol': 'f5',
+        'amount': 'f6',
+        'amplitude': 'f7',
+        'turnover_rate': 'f8',
+        'pe': 'f9',
+        'vol_percent': 'f10',
+        'circulate': 'f20',
+        'market_capital': 'f21'
+    }
+
+
+def save_to_db(engine):
+    parse_data_list = json.loads(requests_get(url()))
+
+    if "data" in parse_data_list and "diff" in parse_data_list["data"]:
+        data_all = parse_data_list['data']['diff']
+
+        column_dict = columns_dict()
+        column = list(column_dict.keys())
+        map_dict = list(column_dict.values())
+
+        insert_values = []
+        for row in data_all:
+            if row['f6'] == '-':
+                continue
+
+            data_tmp = []
+            for f in map_dict:
+                if row[f] == '-':
+                    row[f] = 0
+
+                data_tmp.append(row[f])
+            insert_values.append(tuple(data_tmp))
+
+        if insert_values:
+            db_df = pd.DataFrame(insert_values, columns=column)
+            db_df.set_index('item_code', inplace=True)
+            db_df.fillna(0, inplace=True)
+
+            db_df['trade_date'] = find_trade_date("int")
+            db_df.to_sql(
+                name='s_trade_detail',
+                con=engine,
+                if_exists='append')
+
+
 if __name__ == '__main__':
     # 最近一个交易日市场的交易信息
     begin_time = time.time()
-    df = main()
-    print(df)
-
     # 保存到本地
-
+    df = main()
     save(df)
+
+    # 保存到数据库
+    save_to_db(get_db_engine_for_pandas())
     total_time = time.time() - begin_time
     print(total_time)

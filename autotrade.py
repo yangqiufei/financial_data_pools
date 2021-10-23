@@ -9,29 +9,25 @@ import warnings
 from pywinauto.application import Application
 import subprocess
 
-
 warnings.filterwarnings('ignore')
 
 
 class AutoTrade:
     def __init__(self):
-    	# 关闭同花顺
-    	subprocess.call('taskkill /F /IM xiadan.exe', creationflags=0x08000000)
-    	time.sleep(2)
+        # 关闭同花顺
+        subprocess.call('taskkill /F /IM xiadan.exe', creationflags=0x08000000)
+        time.sleep(2)
 
-    	app = Application(backend="win32").start(r"E:\pyauto_soft\同花顺软件\同花顺\xiadan.exe")
-    	time.sleep(2)
-    	app = Application(backend="win32").connect(process=app.process)
-    	self.app_ths = app.window(title=u'网上股票交易系统5.0')
-
+        app = Application(backend="win32").start(r"E:\pyauto_soft\同花顺软件\同花顺\xiadan.exe")
+        time.sleep(2)
+        app = Application(backend="win32").connect(process=app.process)
+        self.app_ths = app.window(title=u'网上股票交易系统5.0')
 
     def common(self):
         account = self.app_ths.window(best_match=u'ComboBox2').texts()[0]
         name = self.app_ths.window(best_match=u'StatusBar').texts()[3]
         print(account)
         print(name)
-
-
 
     def shx(self):
         self.app_ths.post_message(0x111, 32790, 0)
@@ -68,7 +64,6 @@ class AutoTrade:
             else:
                 return
 
-
     def buy_stock(self, amount, code):
         """
         买入股票
@@ -89,7 +84,8 @@ class AutoTrade:
         self.app_ths.Edit3.post_message(0x0302, 12, 0)
         time.sleep(0.01)
         # self.app_ths.button1.click()(369,324),(429,345)
-        mouse.click(button='left', coords=(390, 330))
+        # self.app_ths.button1.click()(393, 311), (453, 332)
+        mouse.click(button='left', coords=(410, 330))
         time.sleep(0.1)
 
     def button43(self, code):
@@ -134,7 +130,6 @@ class AutoTrade:
         self.shx()
         self.app_ths.CVirtualGridCtrl.post_message(0x111, 57634, 0)
         sleep(0.03)
-
 
     def get_data_frozen(self):
         """
@@ -214,9 +209,7 @@ class AutoTrade:
         return ret
 
 
-
-
 if __name__ == '__main__':
-	# 示例 买入000001，100股
-	ths_trade = AutoTrade()
-	data = ths_trade.buy_stock(amount=100, code='000001')
+    # 示例 买入000001，100股
+    ths_trade = AutoTrade()
+    data = ths_trade.buy_stock(amount=100, code='000001')
