@@ -203,6 +203,7 @@ mpf.plot(data,
          style=my_style,
          datetime_format='%Y-%m-%d',
          xrotation=0)
-fig.show()
+# fig.show()
+mpf.show()
 # 保存到本地
 # fig.savefig('a.png')

@@ -148,9 +148,9 @@ class AutoTrade:
         # 获取可用金额
         self.app_ths.post_message(0x111, 165, 0)
         self.shx()
-        Available_amount = self.app_ths.static6.texts()[0]
+        available_amount = self.app_ths.static6.texts()[0]
 
-        return float(Available_amount)
+        return float(available_amount)
 
     def get_frozen_funds(self):
         """
