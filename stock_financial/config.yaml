@@ -12,12 +12,12 @@ redis:
     queue_db: 0
     password:
 
-# 邮箱提醒服务
+# 邮箱提醒服务,修改成自己的！！
 email:
-    mail_host: smtp.qq.com               # 邮件服务器地址
-    mail_user: q                         # 邮箱用户
-    mail_pass: xx                        # 邮箱密码/验证码
-    mail_sender: xx@qq.com               # 发送邮箱
+    mail_host: smtp.qq.com          # 邮件服务器地址
+    mail_user: 123456@vip.qq.com    # 邮箱用户
+    mail_pass: 123456               # 邮箱密码/验证码
+    mail_sender: 123@qq.com         # 发送邮箱
 
 # 本地保存路径
 save_path:
@@ -25,36 +25,70 @@ save_path:
     # A股
     stock:
         detail:         # 每日交易数据
-            path: F:\csv\detail
+            path: D:\csv\detail
             file_name: <<date>>.csv
 
         daily:                                # 日线
-            path: F:\csv\daily                # 日k保存地址
+            path: D:\csv\daily                # 日k保存地址
             file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
 
         weekly:
-            path: F:\csv\weekly               # 周k保存地址
+            path: D:\csv\weekly               # 周k保存地址
             file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
 
         monthly:
-            path: F:\csv\monthly              # 月k保存地址
+            path: D:\csv\monthly              # 月k保存地址
             file_name: <<stock_code>>.csv     # 保存的名称，如 000001.csv
 
     # 港股
     hk:
         detail: # 港股每日交易数据
-            path: F:\csv\hk\detail
+            path: D:\csv\hk\detail
             file_name: <<date>>.csv
 
     # 龙虎榜，必须保证目录要存在，如果不存在，请创建目录，比如创建 F:\csv\lhb 目录
     lhb:
         detail:
-            file_name: F:\csv\lhb\detail.csv
+            file_name: D:\csv\lhb\detail.csv
 
         list:
-            file_name: F:\csv\lhb\list.csv
+            file_name: D:\csv\lhb\list.csv
 
 cache:
+    pending_down_code_queue: pending_down_code_queue:<<trade_date>>
+    downing_code_set: downing_code_set:<<trade_date>>
+
     ma_lte:
         name: "ma_lte:<<date>>"
         expire: 1296000
+
+    # 交易日期的有序集合
+    trade_data_set: trade_data_set
+
+    # 历史交易日期集合
+    history_td_set: history_td_set
+
+    trade_lock:
+        name: trade_lock
+        expire: 30
+
+    trade_list:
+        name: trade_list:<<strategy_id>>
+        expire: 86400
+
+    strategies_items:
+        name: strategies_items:<<strategy_id>>:<<trade_date>>
+        expire: 86400
+
+    # 买入的数据，以天为限
+    strategies_items_buying:
+        name: strategies_items_buying:<<trade_date>>
+        expire: 86400
+
+    # 卖出的数据，除了当天买入的
+    strategies_items_selling:
+        name: strategies_items_selling:<<trade_date>>
+        expire: 86400
+
+    strategies:
+        name: strategy:<<strategy_id>>

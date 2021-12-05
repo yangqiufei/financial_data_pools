@@ -9,11 +9,11 @@ Desc: 东方财富网-行情首页-上证 A 股-每日行情
 使用示例（直接运行main函数，获取最近一个交易日的交易信息）：
 main()
 """
-import datetime
 import time
 import json
 import pandas as pd
 import os
+
 from data_urls import a_detail_url as url
 from comm_funcs import requests_get
 from comm_funcs import get_config
@@ -148,7 +148,6 @@ def save_to_db(engine):
             db_df = pd.DataFrame(insert_values, columns=column)
             db_df.set_index('item_code', inplace=True)
             db_df.fillna(0, inplace=True)
-
             db_df['trade_date'] = find_trade_date("int")
             db_df.to_sql(
                 name='s_trade_detail',
@@ -160,10 +159,11 @@ if __name__ == '__main__':
     # 最近一个交易日市场的交易信息
     begin_time = time.time()
     # 保存到本地
-    df = main()
-    save(df)
+    # df = main()
+    # save(df)
 
     # 保存到数据库
     save_to_db(get_db_engine_for_pandas())
+
     total_time = time.time() - begin_time
     print(total_time)

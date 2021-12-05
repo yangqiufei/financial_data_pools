@@ -214,6 +214,7 @@ if __name__ == '__main__':
     # get_list("2021-09-17", "2021-09-17", True)
 
     # 获取个股龙虎榜详情，存入数据库
+    lhb_date = "2021-10-25"
     save_detail_to_db(lhb_date, lhb_date)
     # detail(lhb_date, lhb_date)
 

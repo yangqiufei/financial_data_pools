@@ -128,6 +128,7 @@ def run(total_page=100, notice_type=0, notice_date=''):
     p.close()
     p.join()
 
+
 def main(data, notice_type=0, notice_date=''):
     '''
     主函数：多线程程序
@@ -168,12 +169,12 @@ if __name__ == '__main__':
     start = time.time()
 
     # 获取指定某天的公告
-    date = '2021-01-10'
+    # date = '2021-01-10'
     date = get_current_date()
-    data = tuple(range(1, 101))
+    data = tuple(range(1, 10))
     main(data, notice_type=2, notice_date=date)
 
     # 获取所有定增的公告
-    run(total_page=100, notice_type=2)
+    # run(total_page=100, notice_type=2)
     end = time.time()
     print('共运行了{}秒'.format((end - start)))

@@ -134,7 +134,7 @@ def main(begin_date, end_date):
 if __name__ == '__main__':
     begin = time.time()
     # 获取从当前日期后 2021-12-10 的解禁股信息
-    begin_date = get_current_date()
+    begin_date = "2021-01-10"
     end_date = '2021-12-10'
     main(begin_date=begin_date, end_date=end_date)
     print(time.time() - begin)

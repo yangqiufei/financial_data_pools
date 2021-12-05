@@ -1,0 +1,9 @@
+/.idea/vcs.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/modules.xml
+/.idea/misc.xml
+/.idea/financial_data_pools.iml
+my_tasks/*
+stock_tasks/*
+celerybeat-schedule*
+*__pycache__*

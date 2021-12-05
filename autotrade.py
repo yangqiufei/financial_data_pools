@@ -8,20 +8,31 @@ import pandas as pd
 import warnings
 from pywinauto.application import Application
 import subprocess
+import sys
+
+sys.path.append(".")
+
+from stock_financial.comm_funcs import Singleton
 
 warnings.filterwarnings('ignore')
 
 
-class AutoTrade:
-    def __init__(self):
+class AutoTrade(Singleton):
+    app = None
+
+    def start_trade(self):
+        # if self.app is None:
         # 关闭同花顺
         subprocess.call('taskkill /F /IM xiadan.exe', creationflags=0x08000000)
-        time.sleep(2)
+        time.sleep(0.1)
 
-        app = Application(backend="win32").start(r"E:\pyauto_soft\同花顺软件\同花顺\xiadan.exe")
-        time.sleep(2)
-        app = Application(backend="win32").connect(process=app.process)
-        self.app_ths = app.window(title=u'网上股票交易系统5.0')
+        self.app = Application(backend="win32").start(r"C:\同花顺软件\同花顺\xiadan.exe")
+
+        time.sleep(0.1)
+
+        self.app_ths = self.app.window(title=u'网上股票交易系统5.0')
+
+        return self.app_ths
 
     def common(self):
         account = self.app_ths.window(best_match=u'ComboBox2').texts()[0]
@@ -84,8 +95,8 @@ class AutoTrade:
         self.app_ths.Edit3.post_message(0x0302, 12, 0)
         time.sleep(0.01)
         # self.app_ths.button1.click()(369,324),(429,345)
-        # self.app_ths.button1.click()(393, 311), (453, 332)
-        mouse.click(button='left', coords=(410, 330))
+        # (445, 363)-(505, 384),(408, 324)-(468, 345)
+        mouse.click(button='left', coords=(445, 330))
         time.sleep(0.1)
 
     def button43(self, code):
@@ -196,6 +207,7 @@ class AutoTrade:
         #获取同花顺持仓股票明细
         读取ListView中的信息
         :return: 清洗后的数据
+        [{'明细': '', '证券代码': '002024', '证券名称': '苏宁易购', '股票余额': 0, '可用余额': 0, '冻结数量': 0, '成本价': 0.0, '市价': 4.66, '盈亏': 21.37, '盈亏比例': 0.0, '市值': 0.0, '交易市场': '深圳Ａ股', 'Unnamed: 12': ''}, {'明细': '', '证券代码': '300536', '证券名称': '农尚环境', '股票余额': 3100, '可用余额': 3100, '冻结数量': 0, '成本价': -26.875, '市价': 20.96, '盈亏': 148289.21, '盈亏比例': 0.0, '市值': 64976.0, '交易市场': '深圳Ａ股', 'Unnamed: 12': ''}]
         """
         self.copyto()
         data1 = clipboard.GetData()

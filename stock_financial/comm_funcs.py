@@ -16,6 +16,8 @@ import yaml
 import akshare as ak
 import sqlalchemy
 import smtplib
+import pymysql
+from pymysql.cursors import DictCursor
 from email.mime.text import MIMEText
 from redis import StrictRedis
 
@@ -103,7 +105,7 @@ def time_last_day_of_month(year=None, month=None):
     return '-'.join([str(year), str(month), str(day)])
 
 
-class YamlConfigParser(object):
+class Singleton(object):
     """
     单例模式
     """
@@ -113,26 +115,52 @@ class YamlConfigParser(object):
     def __init__(self):
         pass
 
+    def __new__(cls, *args, **kwargs):
+        _instance = kwargs.get("instance", cls.__name__ + "_instance")
+        if not hasattr(Singleton, _instance):
+            with Singleton._instance_lock:
+                if not hasattr(Singleton, _instance):
+                    Singleton._instance = object.__new__(cls)
+
+        return Singleton._instance
+
+
+class YamlConfigParser(Singleton):
+    """
+    单例模式
+    """
+    _conf = None
+
     @classmethod
     def get_config(cls):
+        if not cls._conf:
+            # 读取配置
+            work_path = os.path.dirname(os.path.realpath(__file__))
+            yaml_file = os.path.join(work_path, 'config.yaml')
+            with open(yaml_file, 'r', encoding="utf-8") as file:
+                file_data = file.read()
+
+            yaml_config = yaml.safe_load(file_data)
+            setattr(cls, "_conf", yaml_config)
+
         return cls._conf
 
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(YamlConfigParser, "_instance"):
-            with YamlConfigParser._instance_lock:
-                if not hasattr(YamlConfigParser, "_instance"):
-                    YamlConfigParser._instance = object.__new__(cls)
-
-                    # 读取配置
-                    work_path = os.path.dirname(os.path.realpath(__file__))
-                    yaml_file = os.path.join(work_path, 'config.yaml')
-                    with open(yaml_file, 'r', encoding="utf-8") as file:
-                        file_data = file.read()
-
-                    yaml_config = yaml.safe_load(file_data)
-                    setattr(YamlConfigParser, "_conf", yaml_config)
-
-        return YamlConfigParser._instance
+    # def __new__(cls, *args, **kwargs):
+    #     if not hasattr(YamlConfigParser, "_instance"):
+    #         with YamlConfigParser._instance_lock:
+    #             if not hasattr(YamlConfigParser, "_instance"):
+    #                 YamlConfigParser._instance = object.__new__(cls)
+    #
+    #                 # 读取配置
+    #                 work_path = os.path.dirname(os.path.realpath(__file__))
+    #                 yaml_file = os.path.join(work_path, 'config.yaml')
+    #                 with open(yaml_file, 'r', encoding="utf-8") as file:
+    #                     file_data = file.read()
+    #
+    #                 yaml_config = yaml.safe_load(file_data)
+    #                 setattr(YamlConfigParser, "_conf", yaml_config)
+    #
+    #     return YamlConfigParser._instance
 
 
 def get_config(read_default_group=None, key=None):
@@ -229,7 +257,7 @@ def get_csv_path(symbol, period="daily") -> str:
     获取个股本地csv路径
     :param period: 日线：daily； 周线：weekly; 月线： monthly
     :param symbol: 个股代码
-    :return:
+    :return: str
     """
     config = get_config("save_path")
     save_file_path = config["stock"][period]["path"]
@@ -333,13 +361,27 @@ def find_trade_date(return_format="date", trade_date=None):
             day = int(str(trade_date)[6:8])
             trade_date = datetime.date(int(year), int(month), int(day))
 
-    df = ak.tool_trade_date_hist_sina()
-    today_df = df.loc[df['trade_date'] == trade_date]
-    if today_df.empty:
-        # 继续寻找
-        today_df = df.loc[df['trade_date'] < trade_date].tail(1)
+    find = 0
+    last_trade_date = trade_date
+    redis_client = RedisClient()
+    redis_conn = redis_client.get_redis_client()
+    key = get_config("cache", "history_td_set")
+    if redis_conn.sismember(key, int(str(trade_date).replace('-', ''))):
+        find = 1
+        last_trade_date = trade_date
 
-    last_trade_date = today_df['trade_date'].values[0]
+    # 没有找到，则通过接口查找
+    if find == 0:
+        df = ak.tool_trade_date_hist_sina()
+        today_df = df.loc[df['trade_date'] == trade_date]
+        if today_df.empty:
+            # 继续寻找
+            today_df = df.loc[df['trade_date'] < trade_date].tail(1)
+
+        last_trade_date = today_df['trade_date'].values[0]
+
+        # 回写缓存
+        redis_conn.sadd(key, int(str(last_trade_date).replace('-', '')))
 
     if return_format == 'int':
         return int(str(last_trade_date).replace('-', ''))
@@ -404,8 +446,35 @@ def get_db_engine_for_pandas():
     host, user, password, database, port, charset = get_db_config()
     cnf = "mysql+pymysql://{}:{}@{}:{}/{}".format(
         user, password, host, port, database)
-    # return sqlalchemy.create_engine(cnf)
-    return sqlalchemy.create_engine(cnf, echo=True)
+    return sqlalchemy.create_engine(cnf)
+    # return sqlalchemy.create_engine(cnf, echo=True)
+
+
+class RedisClient(Singleton):
+    _client = None
+
+    @classmethod
+    def get_redis_client(cls, db=None):
+        """
+        获取redis连接
+        :return:
+        """
+        if not cls._client:
+            redis_config = get_config()
+            redis_db = int(redis_config['redis']['queue_db'])
+
+            if db is not None:
+                redis_db = db
+
+            client = StrictRedis(
+                host=redis_config['redis']['host'],
+                port=int(redis_config['redis']['port']),
+                db=redis_db,
+                password=redis_config['redis']['password'],
+                decode_responses=True)
+            setattr(cls, "_client", client)
+
+        return cls._client
 
 
 def get_redis_client(db=None):
@@ -429,3 +498,206 @@ def get_redis_client(db=None):
         password=redis_passwd,
         decode_responses=True)
 
+
+def get_mysql_client():
+    """
+    获取数据库连接
+    :return:
+    """
+    host, user, password, database, port, charset = get_db_config()
+    db_config = {
+        'host': host,
+        'user': user,
+        'password': password,
+        'database': database,
+        'port': int(port),
+        'charset': charset
+    }
+
+    return pymysql.connect(**db_config)
+
+
+class MysqlClient(Singleton):
+    _mysql_client = None
+
+    @classmethod
+    def get_client(cls, dict_cursor=True, db=None):
+        """
+        获取mysql连接
+        :return:
+        """
+        if not cls._mysql_client:
+            host, user, password, database, port, charset = get_db_config()
+
+            if db is not None:
+                database = db
+
+            db_config = {
+                'host': host,
+                'user': user,
+                'password': password,
+                'database': database,
+                'port': int(port),
+                'charset': charset
+            }
+
+            if dict_cursor:
+                db_config['cursorclass'] = DictCursor
+
+            client = pymysql.connect(**db_config)
+
+            setattr(cls, "_mysql_client", client)
+
+        return cls._mysql_client
+
+
+def get_mysql_client_dict():
+    """
+    获取数据库链接
+    :return:
+    """
+    host, user, password, database, port, charset = get_db_config()
+    db_config = {
+        'host': host,
+        'user': user,
+        'password': password,
+        'database': database,
+        'port': int(port),
+        'charset': charset,
+        'cursorclass': DictCursor
+    }
+
+    return pymysql.connect(**db_config)
+
+
+def date_to_int(date, slug='-'):
+    """
+    将日期转换成整数，如2020-10-12 转换成20201012
+    :param date:
+    :param slug: 分隔符
+    :return:
+    """
+    return str(date).replace(slug, '')
+
+
+def int_to_date(number, slug='-'):
+    """
+    将数字转换成日期，如20201012 转成2020-10-12
+    :param number:
+    :param slug: 分隔符
+    :return:
+    """
+    number_str = str(number)
+    if len(number_str) == 8:
+        return slug.join([number_str[0:4], number_str[4:6], number_str[6:8]])
+
+    return ''
+
+
+def check_work_time(**kwargs):
+    """
+    检测是否在工作时段，如果不在工作时段，则休眠，默认是 9:25:00.000 - 15:00:00.000
+    @param: start_hour:开始工作的小时， 默认为上午9
+    @param: start_minute:开始工作的分钟， 默认为25
+    @param: start_second:开始工作的秒，默认为0
+    @param: start_microsecond:开始工作的毫秒，默认为0
+    @param: end_hour:结束工作的小时，默认为下午15
+    @param: end_minute:结束工作的分钟，默认为0
+    @param: end_second:结束工作的秒，默认为0
+    @param: end_microsecond:结束工作的毫秒，默认为0
+    使用例子：设置工作时间段为上午10点30分30秒 至 下午14点30分20秒
+    t = {"end_hour": 14, "end_minute": 30, "end_second": 20, "start_hour": 10, "start_minute": 30, "start_second": 30}
+    self.check_work_time(**t)
+    """
+    now = datetime.datetime.today()
+    date = str(now.date())
+
+    # 首先检测是否是交易日
+    if date != find_trade_date(return_format="str", trade_date=date):
+        # 直接休眠一天
+        one_day = 24 * 60 * 60
+        return one_day
+
+    start_hour = kwargs.get("start_hour", 9)
+    start_minute = kwargs.get("start_minute", 25)
+    start_second = kwargs.get("start_second", 0)
+    start_microsecond = kwargs.get("start_microsecond", 0)
+    start_time = datetime.datetime(now.year, now.month, now.day, start_hour,
+                                   start_minute, start_second, start_microsecond)
+
+    # 检测是否是交易时间
+    if start_time > now:
+        time_delta = start_time - now
+
+        # 还没开始, 进入休眠
+        return time_delta.seconds
+
+    end_hour = kwargs.get("end_hour", 15)
+    end_minute = kwargs.get("end_minute", 0)
+    end_second = kwargs.get("end_second", 0)
+    end_microsecond = kwargs.get("end_microsecond", 0)
+    end_time = datetime.datetime(now.year, now.month, now.day,
+                                 end_hour, end_minute, end_second, end_microsecond)
+    if now > end_time:
+        next_start_time = start_time + datetime.timedelta(days=1)
+        time_delta = next_start_time - now
+
+        # 已经结束了，直接休眠到第二天开始时间
+        return time_delta.seconds
+
+    return -1
+
+
+def is_stock_rise(item_code):
+    """
+    涨停的百分比
+    :param item_code:
+    :return:
+    """
+    if item_code[0:2] == '68' or item_code[0:1] == '3':
+        return 1.2
+
+    return 1.1
+
+
+def rise_percent(item_code):
+    """
+    获取涨停的百分比
+    :param item_code:
+    :return:
+    """
+    return is_stock_rise(item_code)
+
+
+def get_rise_price(item_code, yclose):
+    """
+    计算涨停的价格
+    :param item_code:
+    :param yclose:
+    :return:
+    """
+    yclose = float(yclose)
+    stock_rise_percent = rise_percent(item_code)
+    return round(yclose * stock_rise_percent, 2)
+
+
+if __name__ == "__main__":
+    # time_param = {"end_hour": 15, "end_minute": 0, "end_second": 0, "start_hour": 9, "start_minute": 30}
+    # print(check_work_time(**time_param)/3600)
+    # redis_client = RedisClient()
+    # redis_conn = redis_client.get_redis_client()
+    # print(redis_client)
+    redis_client = get_config()
+    print(id(redis_client))
+
+    def aa():
+        # redis_client = RedisClient()
+        redis_client = get_config()
+        print(id(redis_client))
+
+    t1 = threading.Thread(target=aa, args=[])
+    t2 = threading.Thread(target=aa, args=[])
+    t1.start()
+    import time
+    time.sleep(10)
+    t2.start()

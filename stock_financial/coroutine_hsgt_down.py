@@ -2,11 +2,6 @@
 获取沪深港通个股增减仓数据
 """
 
-from data_urls import get_hsgt_detail_url
-from comm_funcs import except_handle
-from comm_funcs import requests_get
-from comm_funcs import get_db_engine_for_pandas
-from comm_funcs import ua_random
 import threading
 import math
 import time
@@ -14,6 +9,13 @@ import json
 import pandas as pd
 import asyncio
 import aiohttp
+
+from data_urls import get_hsgt_detail_url
+from comm_funcs import except_handle
+from comm_funcs import requests_get
+from comm_funcs import get_db_engine_for_pandas
+from comm_funcs import ua_random
+from comm_funcs import find_trade_date
 
 
 class HSGTDetailDown(object):
@@ -117,7 +119,8 @@ def run(date, pagesize=100):
 if __name__ == '__main__':
 
     start_time = time.time()
-    date = '2021-01-08'
+    # 获取最近一个交易日
+    date = find_trade_date()
     run(date)
     print('total {}'.format((time.time() - start_time)))
 

@@ -367,11 +367,11 @@ def get_financing_notice_url(**kwargs):
 
 
 def get_concept_url(**kwargs):
-    '''
+    """
     获取概念题材
-    :param kwargs: 
-    :return: 
-    '''
+    :param kwargs:
+    :return:
+    """
     param_page = kwargs.get('page', '1')
     param_psize = kwargs.get('psize', '100')
 
@@ -382,11 +382,11 @@ def get_concept_url(**kwargs):
 
 
 def get_hsgt_url(**kwargs):
-    '''
+    """
     获取沪深港通总体流入流出的信息
-    :param kwargs: 
-    :return: 
-    '''
+    :param kwargs:
+    :return:
+    """
     param_page = kwargs.get('page', '1')
     param_psize = kwargs.get('psize', '100')
 
@@ -403,10 +403,10 @@ def get_sz_url(**kwargs):
 
 
 def get_hsgt_detail_url(**kwargs):
-    '''
+    """
     获取沪深港通个股持仓及加减仓的信息
-    :return: 
-    '''
+    :return:
+    """
     domain = 'http://dcfm.eastmoney.com/EM_MutiSvcExpandInterface/api/js/get'
     url_type = 'HSGT20_GGTJ_SUM'
     token = '894050c76af8597a853f5b408b759f5d'
@@ -470,6 +470,32 @@ def hk_detail_url(**kwargs):
         ut,
         fs,
         fields,
+        timestamp
+    )
+
+    return url
+
+
+def high60_url(**kwargs):
+    """
+    获取每日交易信息
+    :param kwargs:
+    :return:
+    """
+    domain = "http://push2ex.eastmoney.com/getAllStockChanges?"
+    ut = "7eea3edcaed734bea9cbfc24409ed989"
+    timestamp = int(round(time.time(), 3) * 1000)
+    param_type = kwargs.get("type", "8213")
+    param_page = kwargs.get("page", "0")
+    param_psize = kwargs.get("pagesize", "64")
+    param_dpt = kwargs.get("dpt", "wzchanges")
+    url = "{}type={}&cb=&pageindex={}&pagesize={}&ut={}&dpt={}&_={}".format(
+        domain,
+        param_type,
+        param_page,
+        param_psize,
+        ut,
+        param_dpt,
         timestamp
     )
 
