@@ -73,6 +73,28 @@ def update_sell_info(trade_date, strategy_id):
         redis_conn.expire(key, key_str["expire"])
 
 
+def update_trade_date_to_cache():
+    """
+    更新交易日期到redis
+    :return:
+    """
+    date_df = ak.tool_trade_date_hist_sina()
+    data = date_df["trade_date"].astype("str").str.replace("-", "").astype("int").values.tolist()
+
+    if len(data) > 0:
+        key = get_config('cache', 'trade_data_set')
+        next_dt = ''
+        trade_date = data[0]
+
+        for i in range(1, len(data)):
+            next_dt = data[i]
+            redis_conn.zadd(key, {next_dt: trade_date})
+            trade_date = next_dt
+
+
 if __name__ == "__main__":
+    # 直接调用下面方法即可
+    update_trade_date_to_cache()
+
     trade_date = find_trade_date(return_format="int")
     update_buy_info(trade_date, 100000001)
