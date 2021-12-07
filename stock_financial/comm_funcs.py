@@ -214,11 +214,11 @@ def send_main(contents='', subject='', receivers=None):
     # 邮件发送方邮箱地址
     sender = mail_config['email']['mail_sender']
 
-    if receivers is None:
+    if receivers is None and "mail_receiver" in mail_config['email'] and mail_config['email']['mail_receiver']:
         # 邮件接受方邮箱地址，注意需要[]包裹，这意味着你可以写多个邮件地址群发
-        receivers = ['1762934298@qq.com']
+        receivers = [mail_config['email']['mail_receiver']]
     elif not isinstance(receivers, list):
-        raise TypeError("邮箱类型必须为列表")
+        raise TypeError("接收的邮箱不能为空且必须为列表，如['111243204893084039@qq.com']")
 
     # 邮件内容设置纯文本
     message = MIMEText(contents, 'plain', 'utf-8')

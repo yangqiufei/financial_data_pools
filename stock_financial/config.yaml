@@ -15,9 +15,11 @@ redis:
 # 邮箱提醒服务,修改成自己的！！
 email:
     mail_host: smtp.qq.com          # 邮件服务器地址
-    mail_user: 123456@vip.qq.com    # 邮箱用户
+    mail_user: 123456@qq.com        # 邮箱用户
     mail_pass: 123456               # 邮箱密码/验证码
     mail_sender: 123@qq.com         # 发送邮箱
+    # 接受邮箱，用于接受程序异常或者交易提醒等
+    mail_receiver:
 
 # 本地保存路径
 save_path:
