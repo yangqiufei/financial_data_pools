@@ -1,5 +1,6 @@
 import sys
 import json
+import akshare as ak
 
 sys.path.append("../..")
 
@@ -96,5 +97,5 @@ if __name__ == "__main__":
     # 直接调用下面方法即可
     update_trade_date_to_cache()
 
-    trade_date = find_trade_date(return_format="int")
-    update_buy_info(trade_date, 100000001)
+    # trade_date = find_trade_date(return_format="int")
+    # update_buy_info(trade_date, 100000001)
