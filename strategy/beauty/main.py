@@ -3,6 +3,8 @@ import sys
 import os
 import json
 
+sys.path.append("../..")
+
 from api.data import StockApi
 from stock_financial.comm_funcs import get_rise_price
 from stock_financial.comm_funcs import get_db_engine_for_pandas
@@ -11,8 +13,6 @@ from stock_financial.comm_funcs import get_config
 from stock_financial.comm_funcs import find_trade_date
 from stock_financial.comm_funcs import RedisClient
 from stock_financial.draw_kline import draw_line
-
-sys.path.append("../..")
 
 
 def find_all(start_date, end_date=None):
