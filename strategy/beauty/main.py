@@ -500,32 +500,34 @@ if __name__ == '__main__':
         从第二天开始不涨停走，涨停就留；
         买入当天不涨停，第二天低开两个点及以下竞价/开盘走
     """
+    try:
+        # 2板
+        min_rise = 2
+        # 最高6板
+        max_rise = 7
+        # 买入日开盘价不低于1%
+        buy_open_per_min = 1
+        # 买入日不涨停，第二天开盘低于-2就卖
+        run_open_per_max = -2
 
-    # 2板
-    min_rise = 2
-    # 最高6板
-    max_rise = 7
-    # 买入日开盘价不低于1%
-    buy_open_per_min = 1
-    # 买入日不涨停，第二天开盘低于-2就卖
-    run_open_per_max = -2
+        # 保存找到的csv文件
+        save_find_file = "blmx.csv"
+        # 保存最终的csv
+        fly_file = "fly_blmx.csv"
+        # 第一步，扫数据
+        begin_time = 20200101
+        end_time = 20210422
+        find_all(begin_time, end_time)
+        # 第二步，找出历史上符合策略的票
+        get_record()
 
-    # 保存找到的csv文件
-    save_find_file = "blmx.csv"
-    # 保存最终的csv
-    fly_file = "fly_blmx.csv"
-    # 第一步，扫数据
-    begin_time = 20200101
-    end_time = 20210422
-    find_all(begin_time, end_time)
-    # 第二步，找出历史上符合策略的票
-    get_record()
+        # 第三步，模拟计算成功率和收益率
+        result = get_profit()
+        print(result)
 
-    # 第三步，模拟计算成功率和收益率
-    result = get_profit()
-    print(result)
-
-    # 每日运行
-    # find_date = find_trade_date(return_format="int")
-    # find_date = 20211116
-    # get_items(find_date)
+        # 每日运行
+        # find_date = find_trade_date(return_format="int")
+        # find_date = 20211116
+        # get_items(find_date)
+    except Exception as e:
+        print(e)
