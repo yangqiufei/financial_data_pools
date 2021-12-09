@@ -372,6 +372,9 @@ def get_profit():
     except FileNotFoundError:
         print("{}不存在，请在第一步中生成该文件, 程序退出".format(fly_file))
         exit()
+    except Exception as e:
+        print(e)
+        exit()
 
 
 def get_items(trade_date=None):
