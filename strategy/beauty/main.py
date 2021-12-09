@@ -30,7 +30,8 @@ def find_all(start_date, end_date=None):
     data_list = StockApi.get_common_data(**param)
 
     if len(data_list) == 0:
-        print('无数据')
+        print('s_continue_last表没有查到相关数据, 程序退出')
+        exit()
 
     for row in data_list:
         c_num = row["continue_num"]
@@ -88,15 +89,20 @@ def find_all(start_date, end_date=None):
                 data_filter_list.append([c_num, item_code, trade_date, nxt_day, nn_date])
 
     df = pd.DataFrame(data_filter_list)
-    df.columns = ["连板高度", "股票代码", "连板日期", "首阴日期", "买入日期"]
 
-    # 合并名称
-    engine = get_db_engine_for_pandas()
-    sql = 'select item_code as `股票代码`,item_name as `名字` from s_items'
-    df_name = pd.read_sql(sql, engine)
-    new_df = pd.merge(left=df, right=df_name, on='股票代码', how='left')
-    print(new_df)
-    new_df.to_csv(save_find_file, index=False)
+    if not df.empty:
+        df.columns = ["连板高度", "股票代码", "连板日期", "首阴日期", "买入日期"]
+
+        # 合并名称
+        engine = get_db_engine_for_pandas()
+        sql = 'select item_code as `股票代码`,item_name as `名字` from s_items'
+        df_name = pd.read_sql(sql, engine)
+        new_df = pd.merge(left=df, right=df_name, on='股票代码', how='left')
+        print(new_df)
+        new_df.to_csv(save_find_file, index=False)
+    else:
+        print("无数据，无法生成{}文件，程序退出".format(save_find_file))
+        exit()
 
 
 def item_code_callback(item_code):
@@ -105,134 +111,147 @@ def item_code_callback(item_code):
 
 
 def get_record():
-    conn = get_mysql_client()
+    try:
+        df = pd.read_csv(save_find_file)
 
-    cursor = conn.cursor()
+        if not df.empty:
+            conn = get_mysql_client()
 
-    df = pd.read_csv(save_find_file)
-    df.loc[:, '股票代码'] = df['股票代码'].map(item_code_callback)
+            cursor = conn.cursor()
 
-    df = df[df['连板高度'].map(lambda x: (min_rise <= x <= max_rise))]
-    fly_data = []
+            df.loc[:, '股票代码'] = df['股票代码'].map(item_code_callback)
 
-    date_continue_map = {}
-    for row in df.itertuples():
-        try:
-            item_code = getattr(row, '股票代码')
-            trade_date = getattr(row, '连板日期')
-            continue_num = getattr(row, '连板高度')
-            item_name = getattr(row, '名字')
-            print(item_code)
-            nxt_date = getattr(row, '首阴日期')
-            buy_date = getattr(row, '买入日期')
+            df = df[df['连板高度'].map(lambda x: (min_rise <= x <= max_rise))]
+            fly_data = []
 
-            # 60验证
-            param60 = {"condition": {
-                "trade_date": [{"value": trade_date, "operator": ">="}, {"value": nxt_date, "operator": "<="}],
-                "item_code": {"value": item_code, "operator": "="}
-            },
-                "fields": ["`id`"],
-                "table": "s_changes",
-                "limit": 1,
-                "debug": 1
-            }
-            high_60 = StockApi.get_common_data(**param60)
-            if not high_60:
-                print("{}未达到60日淘汰".format(item_code))
-                continue
+            date_continue_map = {}
+            for row in df.itertuples():
+                try:
+                    item_code = getattr(row, '股票代码')
+                    trade_date = getattr(row, '连板日期')
+                    continue_num = getattr(row, '连板高度')
+                    item_name = getattr(row, '名字')
+                    print(item_code)
+                    nxt_date = getattr(row, '首阴日期')
+                    buy_date = getattr(row, '买入日期')
 
-            if trade_date not in date_continue_map:
-                new_item_time = trade_date - 10000
-                sql = 'select a.continue_num from s_continue_last as a ' \
-                      'left join s_items as b on a.item_code=b.item_code ' \
-                      'where date_time={} and continue_num>{} and item_time<{} ' \
-                      'GROUP BY a.continue_num ' \
-                      'order by a.continue_num desc limit 2'.format(trade_date, min_rise, new_item_time)
-                cursor.execute(sql)
-                exists_rows = cursor.fetchall()
-                date_continue_map[trade_date] = [row[0] for row in exists_rows]
+                    # 60验证
+                    param60 = {"condition": {
+                        "trade_date": [{"value": trade_date, "operator": ">="}, {"value": nxt_date, "operator": "<="}],
+                        "item_code": {"value": item_code, "operator": "="}
+                    },
+                        "fields": ["`id`"],
+                        "table": "s_changes",
+                        "limit": 1,
+                        "debug": 1
+                    }
+                    high_60 = StockApi.get_common_data(**param60)
+                    if not high_60:
+                        print("{}未达到60日淘汰".format(item_code))
+                        continue
 
-            if continue_num not in date_continue_map[trade_date]:
-                print("{}不是排名最高的两个，淘汰".format(item_code))
-                continue
+                    if trade_date not in date_continue_map:
+                        new_item_time = trade_date - 10000
+                        sql = 'select a.continue_num from s_continue_last as a ' \
+                              'left join s_items as b on a.item_code=b.item_code ' \
+                              'where date_time={} and continue_num>{} and item_time<{} ' \
+                              'GROUP BY a.continue_num ' \
+                              'order by a.continue_num desc limit 2'.format(trade_date, min_rise, new_item_time)
+                        cursor.execute(sql)
+                        exists_rows = cursor.fetchall()
+                        date_continue_map[trade_date] = [row[0] for row in exists_rows]
 
-            open_sql = 'select `open_f2`,open_percent_f3,open_amount_f6,yesterday_close_f18 ' \
-                       'from s_open where item_code="{}" and trade_date={} LIMIT 1'.format(item_code, buy_date)
-            cursor.execute(open_sql)
-            open_row = cursor.fetchone()
+                    if continue_num not in date_continue_map[trade_date]:
+                        print("{}不是排名最高的两个，淘汰".format(item_code))
+                        continue
 
-            sql = 'select `open`,is_last,yclose from s_trade_day_kline where item_code="{}" ' \
-                  'and trade_date={} LIMIT 1'.format(item_code, buy_date)
+                    open_sql = 'select `open_f2`,open_percent_f3,open_amount_f6,yesterday_close_f18 ' \
+                               'from s_open where item_code="{}" and trade_date={} LIMIT 1'.format(item_code, buy_date)
+                    cursor.execute(open_sql)
+                    open_row = cursor.fetchone()
 
-            cursor.execute(sql)
-            buy_row = cursor.fetchone()
-            buy_price, is_last, buy_yclose = buy_row
-            if open_row:
-                buy_price, open_percent, open_amount, buy_yclose = open_row
-            else:
-                open_amount = 0
-                open_percent = round(
-                    100 * (buy_price - buy_yclose) / buy_yclose, 2)
+                    sql = 'select `open`,is_last,yclose from s_trade_day_kline where item_code="{}" ' \
+                          'and trade_date={} LIMIT 1'.format(item_code, buy_date)
 
-            sell_date = StockApi.get_next_date(buy_date)
-            sql = 'select `close`,is_last,trade_date,`open`,`yclose` from s_trade_day_kline where item_code="{}" ' \
-                  'and trade_date={}  LIMIT 1'.format(item_code, sell_date)
-            cursor.execute(sql)
-            sell_row = cursor.fetchone()
+                    cursor.execute(sql)
+                    buy_row = cursor.fetchone()
+                    buy_price, is_last, buy_yclose = buy_row
+                    if open_row:
+                        buy_price, open_percent, open_amount, buy_yclose = open_row
+                    else:
+                        open_amount = 0
+                        open_percent = round(
+                            100 * (buy_price - buy_yclose) / buy_yclose, 2)
 
-            if not sell_row:
-                print("{}没有找到卖出日记录".format(item_code))
-                continue
-
-            sell_price, sell_is_last, sell_date, nn_open, nn_yclose = sell_row
-            # 卖出条件
-            if str(is_last) == '1':
-                while str(sell_is_last) == '1':
-                    sell_date = StockApi.get_next_date(sell_date)
-                    sql = 'select `close`,is_last,trade_date,`open`,`yclose` from s_trade_day_kline where ' \
-                          'item_code="{}" and trade_date={}  LIMIT 1'.format(item_code, sell_date)
+                    sell_date = StockApi.get_next_date(buy_date)
+                    sql = 'select `close`,is_last,trade_date,`open`,`yclose` from s_trade_day_kline where item_code="{}" ' \
+                          'and trade_date={}  LIMIT 1'.format(item_code, sell_date)
                     cursor.execute(sql)
                     sell_row = cursor.fetchone()
+
+                    if not sell_row:
+                        print("{}没有找到卖出日记录".format(item_code))
+                        continue
+
                     sell_price, sell_is_last, sell_date, nn_open, nn_yclose = sell_row
-            else:
-                sell_open_percent = round(
-                    100 * (nn_open - nn_yclose) / nn_yclose, 2)
+                    # 卖出条件
+                    if str(is_last) == '1':
+                        while str(sell_is_last) == '1':
+                            sell_date = StockApi.get_next_date(sell_date)
+                            sql = 'select `close`,is_last,trade_date,`open`,`yclose` from s_trade_day_kline where ' \
+                                  'item_code="{}" and trade_date={}  LIMIT 1'.format(item_code, sell_date)
+                            cursor.execute(sql)
+                            sell_row = cursor.fetchone()
+                            sell_price, sell_is_last, sell_date, nn_open, nn_yclose = sell_row
+                    else:
+                        sell_open_percent = round(
+                            100 * (nn_open - nn_yclose) / nn_yclose, 2)
 
-                if sell_open_percent < run_open_per_max:
-                    sell_price = nn_open
+                        if sell_open_percent < run_open_per_max:
+                            sell_price = nn_open
 
-            tmp = (
-                item_code,
-                item_name,
-                trade_date,
-                open_percent,
-                open_amount,
-                buy_price,
-                buy_date,
-                sell_price,
-                sell_date,
-                continue_num)
-            fly_data.append(tmp)
-        except Exception as e:
-            print(e)
-            continue
+                    tmp = (
+                        item_code,
+                        item_name,
+                        trade_date,
+                        open_percent,
+                        open_amount,
+                        buy_price,
+                        buy_date,
+                        sell_price,
+                        sell_date,
+                        continue_num)
+                    fly_data.append(tmp)
+                except Exception as e:
+                    print(e)
+                    continue
 
-    if fly_data:
-        fly_df = pd.DataFrame(fly_data)
-        fly_df.columns = ["股票代码",
-                          '名字',
-                          '连板日期',
-                          '买入日开盘涨跌幅',
-                          '买入日竞价成交金额',
-                          '买入价格',
-                          '买入日期',
-                          '卖出价格',
-                          '卖出日期',
-                          '连板高度']
-        fly_df.to_csv(fly_file, index=False)
+            if fly_data:
+                fly_df = pd.DataFrame(fly_data)
+                fly_df.columns = ["股票代码",
+                                  '名字',
+                                  '连板日期',
+                                  '买入日开盘涨跌幅',
+                                  '买入日竞价成交金额',
+                                  '买入价格',
+                                  '买入日期',
+                                  '卖出价格',
+                                  '卖出日期',
+                                  '连板高度']
+                fly_df.to_csv(fly_file, index=False)
 
-    cursor.close()
-    conn.close()
+            cursor.close()
+            conn.close()
+        else:
+            print("{}文件无数据，程序退出".format(save_find_file))
+            exit()
+    except FileNotFoundError:
+        print("{}不存在，请在第一步中生成该文件, 程序退出".format(save_find_file))
+        exit()
+    except Exception as e:
+        print(e)
+        exit()
+
 
 
 def get_continue_top(df, top_num):
@@ -243,112 +262,116 @@ def get_continue_top(df, top_num):
 
 
 def get_profit():
-    df = pd.read_csv(fly_file)
-    df.loc[:, '股票代码'] = df['股票代码'].map(item_code_callback)
-    df.loc[:, '利润'] = 100 * (df['卖出价格'] - df['买入价格']) / df['买入价格']
-    print(df)
-    df = df.groupby("连板日期").apply(get_continue_top, top_num=1)
+    try:
+        df = pd.read_csv(fly_file)
+        df.loc[:, '股票代码'] = df['股票代码'].map(item_code_callback)
+        df.loc[:, '利润'] = 100 * (df['卖出价格'] - df['买入价格']) / df['买入价格']
+        print(df)
+        df = df.groupby("连板日期").apply(get_continue_top, top_num=1)
 
-    # 买入次数
-    buy_num = 0
+        # 买入次数
+        buy_num = 0
 
-    # 成功次数（赚钱的次数）
-    success_num = 0
+        # 成功次数（赚钱的次数）
+        success_num = 0
 
-    # 用模拟资金代替
-    amount = 100000
+        # 用模拟资金代替
+        amount = 100000
 
-    res = {"初始金额": amount}
+        res = {"初始金额": amount}
 
-    i = 0
-    position = {}
+        i = 0
+        position = {}
 
-    # 手续费
-    total_fee = 0
-    fee = 0.00015
+        # 手续费
+        total_fee = 0
+        fee = 0.00015
 
-    # 印花税
-    total_fax = 0
-    fax = 0.0001
-    line_x = []
-    line_y = []
-    for row in df.itertuples():
-        item_code = getattr(row, '股票代码')
-        item_name = getattr(row, '名字')
-        buy_date = getattr(row, '买入日期')
-        buy_price = getattr(row, '买入价格')
-        sell_price = getattr(row, '卖出价格')
-        sell_date = getattr(row, '卖出日期')
+        # 印花税
+        total_fax = 0
+        fax = 0.0001
+        line_x = []
+        line_y = []
+        for row in df.itertuples():
+            item_code = getattr(row, '股票代码')
+            item_name = getattr(row, '名字')
+            buy_date = getattr(row, '买入日期')
+            buy_price = getattr(row, '买入价格')
+            sell_price = getattr(row, '卖出价格')
+            sell_date = getattr(row, '卖出日期')
 
-        if i == 0:
-            i = 1
-        else:
-            if 'sell_date' in position and buy_date > position['sell_date']:
-                if position['sell_price'] > position['buy_price']:
-                    success_num += 1
-
-                # 买入日期大于卖出日期，比如买入日期为20200108，卖出日期为20200107，则清空
-                sell_amount = position['num'] * position['sell_price']
-
-                print(position['item_name'])
-
-                # 减去手续费和印花税
-                total_fax += sell_amount * fax
-                total_fee += sell_amount * fee
-                amount += sell_amount - sell_amount * fee - sell_amount * fax
-                line_x.append(str(position['sell_date']))
-                line_y.append(amount)
-                # print(amount)
-                position = {}
-
-        if not position:
-            av_num = int(amount // (100 * buy_price) * 100)
-            buy_amount = av_num * buy_price
-            net_amount = amount - buy_amount - fee * buy_amount
-
-            # 如果手续费不够，则少买100股
-            if net_amount < 0:
-                av_num = av_num - 100
-                buy_amount = av_num * buy_price
-                amount = amount - buy_amount - fee * buy_amount
+            if i == 0:
+                i = 1
             else:
-                amount = net_amount
+                if 'sell_date' in position and buy_date > position['sell_date']:
+                    if position['sell_price'] > position['buy_price']:
+                        success_num += 1
 
-            if av_num > 0:
-                buy_num += 1
+                    # 买入日期大于卖出日期，比如买入日期为20200108，卖出日期为20200107，则清空
+                    sell_amount = position['num'] * position['sell_price']
 
-            total_fee += fee * buy_amount
+                    print(position['item_name'])
 
-            position = {
-                'item_code': item_code,
-                'item_name': item_name,
-                'num': av_num,
-                'buy_price': buy_price,
-                'sell_price': sell_price,
-                'sell_date': sell_date,
-                'buy_date': buy_date
-            }
-            # kline(item_code, start_time=buy_date - 300, end_time=sell_date + 300)
-        else:
-            print('没买上：', getattr(row, '名字'))
+                    # 减去手续费和印花税
+                    total_fax += sell_amount * fax
+                    total_fee += sell_amount * fee
+                    amount += sell_amount - sell_amount * fee - sell_amount * fax
+                    line_x.append(str(position['sell_date']))
+                    line_y.append(amount)
+                    # print(amount)
+                    position = {}
 
-    if position:
-        amount += position['num'] * position['sell_price']
-        line_x.append(str(position['sell_date']))
-        line_y.append(amount)
+            if not position:
+                av_num = int(amount // (100 * buy_price) * 100)
+                buy_amount = av_num * buy_price
+                net_amount = amount - buy_amount - fee * buy_amount
 
-    res["期末资金"] = amount
-    res["佣金"] = total_fee
-    res["印花税"] = total_fax
-    res["交易次数"] = buy_num
-    res["盈利次数"] = success_num
-    res["成功率"] = round(success_num / buy_num, 4) * 100
-    res["收益率"] = round((amount - res["初始金额"]) / res["初始金额"], 4) * 100
+                # 如果手续费不够，则少买100股
+                if net_amount < 0:
+                    av_num = av_num - 100
+                    buy_amount = av_num * buy_price
+                    amount = amount - buy_amount - fee * buy_amount
+                else:
+                    amount = net_amount
 
-    line = draw_line('', line_x, line_y).render('blmx.html')
-    os.system('blmx.html')
+                if av_num > 0:
+                    buy_num += 1
 
-    return res
+                total_fee += fee * buy_amount
+
+                position = {
+                    'item_code': item_code,
+                    'item_name': item_name,
+                    'num': av_num,
+                    'buy_price': buy_price,
+                    'sell_price': sell_price,
+                    'sell_date': sell_date,
+                    'buy_date': buy_date
+                }
+                # kline(item_code, start_time=buy_date - 300, end_time=sell_date + 300)
+            else:
+                print('没买上：', getattr(row, '名字'))
+
+        if position:
+            amount += position['num'] * position['sell_price']
+            line_x.append(str(position['sell_date']))
+            line_y.append(amount)
+
+        res["期末资金"] = amount
+        res["佣金"] = total_fee
+        res["印花税"] = total_fax
+        res["交易次数"] = buy_num
+        res["盈利次数"] = success_num
+        res["成功率"] = round(success_num / buy_num, 4) * 100
+        res["收益率"] = round((amount - res["初始金额"]) / res["初始金额"], 4) * 100
+
+        line = draw_line('', line_x, line_y).render('blmx.html')
+        os.system('blmx.html')
+
+        return res
+    except FileNotFoundError:
+        print("{}不存在，请在第一步中生成该文件, 程序退出".format(fly_file))
+        exit()
 
 
 def get_items(trade_date=None):
@@ -491,15 +514,15 @@ if __name__ == '__main__':
     # 第一步，扫数据
     begin_time = 20200101
     end_time = 20210422
-    # find_all(begin_time, end_time)
+    find_all(begin_time, end_time)
     # 第二步，找出历史上符合策略的票
-    # get_record()
+    get_record()
 
     # 第三步，模拟计算成功率和收益率
-    # result = get_profit()
-    # print(result)
+    result = get_profit()
+    print(result)
 
     # 每日运行
     # find_date = find_trade_date(return_format="int")
-    find_date = 20211116
-    get_items(find_date)
+    # find_date = 20211116
+    # get_items(find_date)
